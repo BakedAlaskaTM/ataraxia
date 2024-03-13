@@ -23,6 +23,8 @@ LAYER_NAME_PLATFORMS = "Platforms"
 LAYER_NAME_MOVING_PLATFORMS = "Moving Platforms"
 LAYER_NAME_LADDERS = "Ladders"
 LAYER_NAME_BACKGROUND = "Background"
+LAYER_NAME_STATUES = "Statues"
+LAYER_NAME_SPAWNPOINT = "Current Statue"
 
 # Physics things
 GRAVITY = 1
@@ -31,7 +33,7 @@ PLAYER_RUN_SPEED = 15
 PLAYER_JUMP_SPEED = 20
 
 # Player spawnpoints
-PLAYER_START_X = 2
+PLAYER_START_X = 3
 PLAYER_START_Y = 3
 
 # Loading mirrored sprites
@@ -186,6 +188,11 @@ class GameView(arcade.View):
         self.down_pressed = False
         self.running = False
         self.jump_needs_reset = False
+        self.interact = False
+
+        # Variables to change player spawnpoint
+        self.spawnpoint = (PLAYER_START_X, PLAYER_START_Y)
+        self.prev_spawnpoint = None
 
         # Tilemap object
         self.tile_map = None
@@ -222,7 +229,18 @@ class GameView(arcade.View):
 
         # Layer specific options for Tilemap
         layer_options = {
-
+            LAYER_NAME_PLATFORMS: {
+                "use_spatial_hash": True,
+            },
+            LAYER_NAME_STATUES: {
+                "use_spatial_hash": True,
+            },
+            LAYER_NAME_LADDERS: {
+                "use_spatial_hash": True,
+            },
+            LAYER_NAME_MOVING_PLATFORMS: {
+                "use_spatial_hash": False,
+            },
         }
 
         # Read in Tiled map
@@ -339,6 +357,9 @@ class GameView(arcade.View):
         if key == arcade.key.LSHIFT:
             self.running = True
 
+        if key == arcade.key.F:
+            self.interact = True
+
         self.process_keychange()
 
     def on_key_release(self, key, modifiers):
@@ -356,6 +377,9 @@ class GameView(arcade.View):
 
         if key == arcade.key.LSHIFT:
             self.running = False
+
+        if key == arcade.key.F:
+            self.interact = False
 
         self.process_keychange()
     
@@ -405,6 +429,27 @@ class GameView(arcade.View):
             ],
         )
 
+        # Check for collisions with the statue
+        if self.interact:
+            player_collision_list = arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_STATUES])
+            for collision in player_collision_list:
+                self.scene[LAYER_NAME_STATUES].append(self.prev_spawnpoint)
+                self.scene[LAYER_NAME_SPAWNPOINT].clear()
+                if abs(collision.center_x - self.player_sprite.center_x) < self.tile_map.tile_width * TILE_SCALING * 2:
+                    self.spawnpoint = (collision.center_x / (self.tile_map.tile_width * TILE_SCALING), collision.center_y / (self.tile_map.tile_width * TILE_SCALING) - 1)
+                    self.scene[LAYER_NAME_SPAWNPOINT].append(collision)
+                    self.scene[LAYER_NAME_STATUES].remove(collision)
+                    self.prev_spawnpoint = collision
+                    print(f"New spawnpoint at {self.spawnpoint}")
+            self.interact = False
+                    
+
+
+        if self.player_sprite.center_y < 0:
+            self.player_sprite.center_x = self.tile_map.tile_width * TILE_SCALING * self.spawnpoint[0]
+            self.player_sprite.center_y = self.tile_map.tile_height * TILE_SCALING * self.spawnpoint[1]
+
+            print(f"({self.player_sprite.center_x}, {self.player_sprite.center_y})")
         self.center_camera_to_player()
 
 # Main Program
