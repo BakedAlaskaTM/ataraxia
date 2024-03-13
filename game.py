@@ -18,7 +18,11 @@ RIGHT_FACING = 0
 LEFT_FACING = 1
 
 # Layer names
+# Character Layers
 LAYER_NAME_PLAYER = "Player"
+LAYER_NAME_VILLAGERS = "Villagers"
+
+# Tile Layers
 LAYER_NAME_PLATFORMS = "Platforms"
 LAYER_NAME_MOVING_PLATFORMS = "Moving Platforms"
 LAYER_NAME_LADDERS = "Ladders"
@@ -50,7 +54,7 @@ def load_texture_pair(filename):
 class Entity(arcade.Sprite):
     """Overarching things for characters"""
 
-    def __init__(self, category_folder, sprite_folder):
+    def __init__(self, category_folder, sprite_folder, available_anims: list):
         super().__init__()
 
         # Default right facing
@@ -62,42 +66,44 @@ class Entity(arcade.Sprite):
 
         main_path = f"{MAIN_PATH}/assets/{category_folder}/{sprite_folder}"
 
-        # Idle frames
-        frame_num = 0
-        for path in os.listdir(f"{main_path}/idle"):
-            if os.path.isfile(os.path.join(main_path, path)):
+        if "Idle" in available_anims:
+            # Idle frames
+            frame_num = 0
+            for path in os.listdir(f"{main_path}/idle"):
                 frame_num += 1
 
-        self.idle_textures = []
-        for i in range(2):
-            texture = load_texture_pair(f"{main_path}/idle/{i}.png")
-            self.idle_textures.append(texture)
+            self.idle_textures = []
+            for i in range(frame_num):
+                texture = load_texture_pair(f"{main_path}/idle/{i}.png")
+                self.idle_textures.append(texture)
 
-        # Jumping and falling sprites
-        self.jump_texture_pair = load_texture_pair(f"{main_path}/jump/0.png")
-        self.fall_texture_pair = load_texture_pair(f"{main_path}/fall/0.png")
+        if "Jump" in available_anims:
+            # Jumping and falling sprites
+            self.jump_texture_pair = load_texture_pair(f"{main_path}/jump/0.png")
+            self.fall_texture_pair = load_texture_pair(f"{main_path}/fall/0.png")
 
-        # Walking frames
-        frame_num = 0
-        for path in os.listdir(f"{main_path}/walk"):
-            if os.path.isfile(os.path.join(main_path, path)):
+        if "Walk" in available_anims:
+            # Walking frames
+            frame_num = 0
+            for path in os.listdir(f"{main_path}/walk"):   
                 frame_num += 1
-        
-        self.walk_textures = []
-        for i in range(4):
-            texture = load_texture_pair(f"{main_path}/walk/{i}.png")
-            self.walk_textures.append(texture)
+            
+            self.walk_textures = []
+            for i in range(frame_num):
+                texture = load_texture_pair(f"{main_path}/walk/{i}.png")
+                self.walk_textures.append(texture)
 
+        if "Climb" in available_anims:
         # Climbing frames
-        #frame_num = 0
-        #for path in os.listdir(f"{main_path}/climb"):
-        #    if os.path.isfile(os.path.join(main_path, path)):
-        #        frame_num += 1
-        
+            frame_num = 0
+            for path in os.listdir(f"{main_path}/climb"):
+                if os.path.isfile(os.path.join(main_path, path)):
+                    frame_num += 1
+            
         #self.climbing_textures = []
-        #for i in range(frame_num):
-        #    texture = load_texture_pair(f"{main_path}/climb/{i}.png")
-        #    self.climbing_textures.append(texture)
+            for i in range(frame_num):
+                texture = load_texture_pair(f"{main_path}/climb/{i}.png")
+                self.climbing_textures.append(texture)
 
         # Set initial texture
         self.texture = self.idle_textures[0][0]
@@ -113,7 +119,7 @@ class PlayerCharacter(Entity):
     def __init__(self):
 
         # Inherit from parent class (Entity)
-        super().__init__("Friendly", "Player")
+        super().__init__("Friendly", "Player", ["Idle", "Walk", "Jump"])
 
         # Track state
         self.jumping = False
@@ -166,6 +172,20 @@ class PlayerCharacter(Entity):
             self.cur_texture = 0
         self.texture = self.walk_textures[self.cur_texture // 4][self.facing_direction]
 
+# Villager NPC
+        
+class DefaultVillager(Entity):
+    """Basic Villager Sprite"""
+    def __init__(self, villager_id):
+
+        # Inherit from parent class (Entity)
+        super().__init__("Friendly", f"Villager{villager_id}", ["Idle"])
+
+        # Track states
+        self.wave = False
+
+    def update_animation(self, delta_time: float = 1 / 60):
+        return
 
 # Actual Game
 class GameView(arcade.View):
@@ -433,8 +453,9 @@ class GameView(arcade.View):
         if self.interact:
             player_collision_list = arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_STATUES])
             for collision in player_collision_list:
-                self.scene[LAYER_NAME_STATUES].append(self.prev_spawnpoint)
-                self.scene[LAYER_NAME_SPAWNPOINT].clear()
+                if self.prev_spawnpoint != None:
+                    self.scene[LAYER_NAME_STATUES].append(self.prev_spawnpoint)
+                    self.scene[LAYER_NAME_SPAWNPOINT].clear()
                 if abs(collision.center_x - self.player_sprite.center_x) < self.tile_map.tile_width * TILE_SCALING * 2:
                     self.spawnpoint = (collision.center_x / (self.tile_map.tile_width * TILE_SCALING), collision.center_y / (self.tile_map.tile_width * TILE_SCALING) - 1)
                     self.scene[LAYER_NAME_SPAWNPOINT].append(collision)
