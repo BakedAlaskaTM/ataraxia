@@ -12,6 +12,7 @@ SCREEN_TITLE = "Ataraxia V1"
 # Sprite Scaling
 CHARACTER_SCALING = 10
 TILE_SCALING = 10
+COLLECTIBLE_SCALING = 4
 
 # Sprite facing direction
 RIGHT_FACING = 0
@@ -21,6 +22,9 @@ LEFT_FACING = 1
 # Character Layers
 LAYER_NAME_PLAYER = "Player"
 LAYER_NAME_VILLAGERS = "Villagers"
+
+# Object Layers
+LAYER_NAME_ORBS = "Orbs"
 
 # Tile Layers
 LAYER_NAME_PLATFORMS = "Platforms"
@@ -100,10 +104,20 @@ class Entity(arcade.Sprite):
                 if os.path.isfile(os.path.join(main_path, path)):
                     frame_num += 1
             
-        #self.climbing_textures = []
+            #self.climbing_textures = []
             for i in range(frame_num):
                 texture = load_texture_pair(f"{main_path}/climb/{i}.png")
-                self.climbing_textures.append(texture)
+                #self.climbing_textures.append(texture)
+
+        if "Wave" in available_anims:
+            frame_num = 0
+            for path in os.listdir(f"{main_path}/wave"):
+                frame_num += 1
+            
+            self.wave_textures = []
+            for i in range(frame_num):
+                texture = load_texture_pair(f"{main_path}/wave/{i}.png")
+                self.wave_textures.append(texture)
 
         # Set initial texture
         self.texture = self.idle_textures[0][0]
@@ -111,15 +125,44 @@ class Entity(arcade.Sprite):
         # Set hitbox
         self.set_hit_box(self.texture.hit_box_points)
 
+# Collectible Objects Template class
+        
+class Collectible(Entity):
+    """Template for collectible items like orbs and potions and weapons and stuff."""
+    def __init__(self, sprite_folder):
+        # Inherit from parent class (Entity)
+        super().__init__("InanimateObjects", sprite_folder, ["Idle"])
+        self.scale = COLLECTIBLE_SCALING
+
+
+# Energy Orb class
+        
+class Orb(Collectible):
+    """Energy Orb Sprite"""
+
+    def __init__(self):
+        # Inherit from parent class (Collectible)
+        super().__init__("EnergyOrb")
+        self.type = None
+    
+    def update_animation(self, delta_time: float = 1 / 60):
+        self.cur_texture += 1
+        if self.cur_texture > 23:
+            self.cur_texture = 0
+        self.texture = self.idle_textures[self.cur_texture // 12][0]
+        return
+
+
+
 # Player Class
         
 class PlayerCharacter(Entity):
     """Player Sprite"""
 
-    def __init__(self):
+    def __init__(self, shape):
 
         # Inherit from parent class (Entity)
-        super().__init__("Friendly", "Player", ["Idle", "Walk", "Jump"])
+        super().__init__("Friendly", f"Player{shape+1}", ["Idle", "Walk", "Jump"])
 
         # Track state
         self.jumping = False
@@ -179,12 +222,31 @@ class DefaultVillager(Entity):
     def __init__(self, villager_id):
 
         # Inherit from parent class (Entity)
-        super().__init__("Friendly", f"Villager{villager_id}", ["Idle"])
+        super().__init__("Friendly", f"Villager{villager_id}", ["Idle", "Wave"])
 
         # Track states
+        self.id = villager_id
         self.wave = False
+        self.interactable = False
 
     def update_animation(self, delta_time: float = 1 / 60):
+        #print(self.wave_textures)
+        # Idle animation
+
+        if self.wave == False:
+            self.texture = self.idle_textures[0][self.facing_direction]
+
+        # Wave animation
+            
+        elif self.wave == True:
+            self.texture = self.wave_textures[0][self.facing_direction]
+        return
+    
+    def update(self, player_pos, tile_map, delta_time: float = 1 / 60):
+        if abs(self.center_x - player_pos[0]) < 1*TILE_SCALING*tile_map.tile_width and abs(self.center_y-player_pos[1]) < 0.5*TILE_SCALING*tile_map.tile_height:
+            self.interactable = True
+        else:
+            self.interactable = False
         return
 
 # Actual Game
@@ -209,6 +271,14 @@ class GameView(arcade.View):
         self.running = False
         self.jump_needs_reset = False
         self.interact = False
+
+        # Player stats (health, energy, etc)
+        self.health = 100
+        self.energy = 0
+        self.shape = 0
+
+        # Sensing variables
+        self.can_interact = False
 
         # Variables to change player spawnpoint
         self.spawnpoint = (PLAYER_START_X, PLAYER_START_Y)
@@ -247,6 +317,7 @@ class GameView(arcade.View):
         # Map name
         map_name = f"{MAIN_PATH}/maps/{self.level}.tmx"
 
+
         # Layer specific options for Tilemap
         layer_options = {
             LAYER_NAME_PLATFORMS: {
@@ -269,8 +340,40 @@ class GameView(arcade.View):
         # Initialise new scene with the tilemap
         self.scene = arcade.Scene.from_tilemap(self.tile_map)
 
+        # Add in villagers
+        villagers_layer = self.tile_map.object_lists[LAYER_NAME_VILLAGERS]
+        for villager_object in villagers_layer:
+            cartesian = self.tile_map.get_cartesian(
+                villager_object.shape[0], villager_object.shape[1]
+            )
+            villager = DefaultVillager(int(villager_object.properties["id"][2])+1)
+            villager.center_x = math.floor(
+                (cartesian[0]+0.5) * TILE_SCALING * self.tile_map.tile_width
+            )
+            villager.center_y = math.floor(
+                (cartesian[1]+0.5) * (self.tile_map.tile_height * TILE_SCALING)-TILE_SCALING
+            )
+            
+            self.scene.add_sprite(LAYER_NAME_VILLAGERS, villager)
+
+        # Add in energy orbs
+        orbs_layer = self.tile_map.object_lists[LAYER_NAME_ORBS]
+        for orb_object in orbs_layer:
+            cartesian = self.tile_map.get_cartesian(
+                orb_object.shape[0], orb_object.shape[1]
+            )
+            orb = Orb()
+            orb.center_x = math.floor(
+                (cartesian[0]+0.5) * TILE_SCALING * self.tile_map.tile_width
+            )
+            orb.center_y = math.floor(
+                (cartesian[1]+0.5) * (self.tile_map.tile_height * TILE_SCALING)-TILE_SCALING
+            )
+            orb.type = orb_object.properties["type"]
+            self.scene.add_sprite(LAYER_NAME_ORBS, orb)
+
         # Setup player at specific coordinates
-        self.player_sprite = PlayerCharacter()
+        self.player_sprite = PlayerCharacter(self.shape)
         self.player_sprite.center_x = (
             self.tile_map.tile_width * TILE_SCALING * PLAYER_START_X
         )
@@ -280,6 +383,9 @@ class GameView(arcade.View):
 
         self.scene.add_sprite(LAYER_NAME_PLAYER, self.player_sprite)
 
+        # Add in enemies
+
+        
         arcade.set_background_color((255, 255, 255))
 
         # Set background colour
@@ -292,7 +398,7 @@ class GameView(arcade.View):
             platforms=self.scene[LAYER_NAME_MOVING_PLATFORMS],
             gravity_constant=GRAVITY,
             ladders=self.scene[LAYER_NAME_LADDERS],
-            walls=self.scene[LAYER_NAME_PLATFORMS]
+            walls=self.scene[LAYER_NAME_PLATFORMS],
         )
 
     def on_show_view(self):
@@ -314,14 +420,27 @@ class GameView(arcade.View):
         self.gui_camera.use()
 
         # Draw GUI content
-        placeholder_text = "Lorem Ipsum"
+
+        # Display current energy
+        current_energy = f"Energy: {self.energy}/3"
         arcade.draw_text(
-            placeholder_text,
+            current_energy,
             10,
-            10,
-            (0, 0, 0),
+            50,
+            (255, 255, 255),
             18,
         )
+
+        # If interact is possible then draw this text
+        if self.can_interact:
+            arcade.draw_text(
+                "Press 'f' to interact",
+                SCREEN_WIDTH*0.8,
+                50,
+                (255, 255, 255),
+                18,
+                
+            )
 
     def process_keychange(self):
         """
@@ -380,6 +499,23 @@ class GameView(arcade.View):
         if key == arcade.key.F:
             self.interact = True
 
+        if self.energy >= 3:
+            if key == arcade.key.E:
+                if key == arcade.key.NUM_1 and self.shape != 0:
+                    self.shape = 0
+                    self.energy -= 3
+                    self.player_sprite = PlayerCharacter(self.shape)
+                elif key == arcade.key.NUM_2 and self.shape != 1:
+                    self.shape = 1
+                    self.energy -= 3
+                    self.player_sprite = PlayerCharacter(self.shape)
+                elif key == arcade.key.NUM_3 and self.shape != 2:
+                    self.shape = 2
+                    self.energy -= 3
+                    self.player_sprite = PlayerCharacter(self.shape)
+                else:
+                    print("Not available or already this shape")
+                
         self.process_keychange()
 
     def on_key_release(self, key, modifiers):
@@ -439,6 +575,8 @@ class GameView(arcade.View):
             [
                 LAYER_NAME_PLAYER,
                 LAYER_NAME_BACKGROUND,
+                LAYER_NAME_VILLAGERS,
+                LAYER_NAME_ORBS
             ],
         )
 
@@ -446,8 +584,31 @@ class GameView(arcade.View):
         self.scene.update(
             [
                 LAYER_NAME_MOVING_PLATFORMS,
+                #LAYER_NAME_VILLAGERS,
             ],
         )
+
+        # Update villagers
+        for villager in self.scene[LAYER_NAME_VILLAGERS]:
+            villager.update(player_pos=(self.player_sprite.center_x, self.player_sprite.center_y), tile_map=self.tile_map)
+
+        interactable_villager = None
+        # Check if in range of villager
+        for villager in self.scene[LAYER_NAME_VILLAGERS]:
+            if villager.interactable:
+                self.can_interact = True
+                interactable_villager = villager.id
+                break
+            else:
+                villager.wave = False
+                self.can_interact = False
+
+        # Check for interaction with villager
+        if self.interact:
+            for villager in self.scene[LAYER_NAME_VILLAGERS]:
+                if villager.id == interactable_villager:
+                    villager.wave = True
+                    print("please")
 
         # Check for collisions with the statue
         if self.interact:
@@ -463,7 +624,14 @@ class GameView(arcade.View):
                     self.prev_spawnpoint = collision
                     print(f"New spawnpoint at {self.spawnpoint}")
             self.interact = False
-                    
+    
+        # Check for collisions with energy orbs
+        player_collision_list = arcade.check_for_collision_with_list(self.player_sprite,  self.scene[LAYER_NAME_ORBS])
+        for collision in player_collision_list:
+            if collision.type == "Energy":
+                self.energy += 1
+                self.scene[LAYER_NAME_ORBS].remove(collision)
+            
 
 
         if self.player_sprite.center_y < 0:
@@ -480,7 +648,7 @@ def main():
     window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
     start_view = GameView()
     window.show_view(start_view)
-    start_view.setup()
+    #start_view.setup()
     arcade.run()
 
 # Things that run

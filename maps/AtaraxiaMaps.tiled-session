@@ -9,21 +9,47 @@
     ],
     "fileStates": {
         "0.tmx": {
-            "scale": 2,
-            "selectedLayer": 0,
+            "expandedObjectLayers": [
+                10,
+                11
+            ],
+            "scale": 8,
+            "selectedLayer": 7,
             "viewCenter": {
-                "x": 407.5,
-                "y": 125.5
+                "x": 214.375,
+                "y": 260.25
+            }
+        },
+        "C:/Users/devin/AppData/Local/Programs/Python/Python311/Lib/site-packages/arcade/resources/tiled_maps/map_with_ladders.json": {
+            "expandedObjectLayers": [
+                18
+            ],
+            "scale": 0.550091911764706,
+            "selectedLayer": 2,
+            "viewCenter": {
+                "x": 1281.6040100250625,
+                "y": 1088.908939014202
             }
         },
         "Testing Tiles.tsx": {
             "dynamicWrapping": true,
             "scaleInDock": 11,
             "scaleInEditor": 1
+        },
+        "testmap.tmj": {
+            "expandedObjectLayers": [
+                10
+            ],
+            "scale": 5.5,
+            "selectedLayer": 7,
+            "viewCenter": {
+                "x": 234,
+                "y": 273.4545454545455
+            }
         }
     },
-    "last.imagePath": "//wbfp02.westlake.local/shomes/ds21616/Documents/13DTP/Assessment/91906 - DevinShen/assets/Tiles/Testing",
-    "map.lastUsedFormat": "tmx",
+    "last.imagePath": "D:/Devin stuff/13DTP/Assessment/91906---DevinShen/assets/Friendly/Villager4/idle",
+    "map.lastUsedFormat": "json",
     "map.tileHeight": 16,
     "map.tileWidth": 16,
     "openFiles": [
@@ -31,7 +57,9 @@
         "Testing Tiles.tsx"
     ],
     "project": "AtaraxiaMaps.tiled-project",
+    "property.type": "string",
     "recentFiles": [
+        "testmap.tmj",
         "Testing Tiles.tsx",
         "0.tmx"
     ],

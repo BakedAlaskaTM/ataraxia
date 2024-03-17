@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.9" tiledversion="1.9.2" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="16" tileheight="16" infinite="0" nextlayerid="10" nextobjectid="1">
+<map version="1.10" tiledversion="1.10.2" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="16" tileheight="16" infinite="0" nextlayerid="13" nextobjectid="13">
  <tileset firstgid="1" source="Testing Tiles.tsx"/>
+ <tileset firstgid="3" source="NPCs.tsx"/>
  <layer id="5" name="Background" width="30" height="20">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -146,4 +147,54 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
+ <objectgroup id="10" name="Villagers">
+  <properties>
+   <property name="id" value="000"/>
+  </properties>
+  <object id="6" x="471.75" y="301.875">
+   <properties>
+    <property name="id" value="003"/>
+   </properties>
+   <point/>
+  </object>
+  <object id="7" x="391.875" y="302.875">
+   <properties>
+    <property name="id" value="002"/>
+   </properties>
+   <point/>
+  </object>
+  <object id="8" x="216.125" y="303.25">
+   <properties>
+    <property name="id" value="001"/>
+   </properties>
+   <point/>
+  </object>
+  <object id="9" x="151.75" y="302.125">
+   <properties>
+    <property name="id" value="000"/>
+   </properties>
+   <point/>
+  </object>
+ </objectgroup>
+ <objectgroup id="12" name="Orbs">
+  <object id="10" x="103.625" y="302.5">
+   <properties>
+    <property name="type" value="Energy"/>
+   </properties>
+   <point/>
+  </object>
+  <object id="11" x="183.5" y="302.125">
+   <properties>
+    <property name="type" value="Energy"/>
+   </properties>
+   <point/>
+  </object>
+  <object id="12" x="248.375" y="302.375">
+   <properties>
+    <property name="type" value="Energy"/>
+   </properties>
+   <point/>
+  </object>
+ </objectgroup>
+ <objectgroup id="11" name="Enemies"/>
 </map>
