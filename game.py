@@ -83,8 +83,23 @@ class Entity(arcade.Sprite):
 
         if "Jump" in available_anims:
             # Jumping and falling sprites
-            self.jump_texture_pair = load_texture_pair(f"{main_path}/jump/0.png")
-            self.fall_texture_pair = load_texture_pair(f"{main_path}/fall/0.png")
+            frame_num = 0
+            for path in os.listdir(f"{main_path}/jump"):   
+                frame_num += 1
+            
+            self.jump_textures = []
+            for i in range(frame_num):
+                texture = load_texture_pair(f"{main_path}/jump/{i}.png")
+                self.jump_textures.append(texture)
+
+            frame_num = 0
+            for path in os.listdir(f"{main_path}/fall"):   
+                frame_num += 1
+            
+            self.fall_textures = []
+            for i in range(frame_num):
+                texture = load_texture_pair(f"{main_path}/fall/{i}.png")
+                self.fall_textures.append(texture)
 
         if "Walk" in available_anims:
             # Walking frames
@@ -165,6 +180,7 @@ class PlayerCharacter(Entity):
         super().__init__("Friendly", f"Player{shape+1}", ["Idle", "Walk", "Jump"])
 
         # Track state
+        self.shape = shape
         self.jumping = False
         self.climbing = False
         self.is_on_ladder = False
@@ -195,25 +211,48 @@ class PlayerCharacter(Entity):
         
         # Jumping animation
         if self.change_y > 0 and not self.is_on_ladder:
-            self.texture = self.jump_texture_pair[self.facing_direction]
+            if self.shape == 2:
+                self.cur_texture += 1
+                if self.cur_texture > 23:
+                    self.cur_texture = 0
+                self.texture = self.jump_textures[self.cur_texture][self.facing_direction]
+            else:
+                self.texture = self.jump_textures[0][self.facing_direction]
             return
         elif self.change_y < 0 and not self.is_on_ladder:
-            self.texture = self.fall_texture_pair[self.facing_direction]
+            if self.shape == 3:
+                self.cur_texture += 1
+                if self.cur_texture > 23:
+                    self.cur_texture = 0
+                self.texture = self.fall_textures[self.cur_texture // 4][self.facing_direction]
+            else:
+                self.texture = self.fall_textures[0][self.facing_direction]
             return
         
         # Idle animation
         if self.change_x == 0:
             self.cur_texture += 1
-            if self.cur_texture > 15:
-                self.cur_texture = 0
-            self.texture = self.idle_textures[self.cur_texture // 8][self.facing_direction]
+            if self.shape == 2:
+                if self.cur_texture > 23:
+                    self.cur_texture = 0
+                self.texture = self.idle_textures[self.cur_texture // 4][self.facing_direction]
+            else:
+                
+                if self.cur_texture > 15:
+                    self.cur_texture = 0
+                self.texture = self.idle_textures[self.cur_texture // 8][self.facing_direction]
             return
         
         # Walking animation
         self.cur_texture += 1
-        if self.cur_texture > 15:
-            self.cur_texture = 0
-        self.texture = self.walk_textures[self.cur_texture // 4][self.facing_direction]
+        if self.shape == 2:
+            if self.cur_texture > 23:
+                self.cur_texture = 0
+            self.texture = self.walk_textures[self.cur_texture // 4][self.facing_direction]
+        else:
+            if self.cur_texture > 15:
+                self.cur_texture = 0
+            self.texture = self.walk_textures[self.cur_texture // 4][self.facing_direction]
 
 # Villager NPC
         
@@ -500,22 +539,60 @@ class GameView(arcade.View):
             self.interact = True
 
         if self.energy >= 3:
-            if key == arcade.key.E:
-                if key == arcade.key.NUM_1 and self.shape != 0:
-                    self.shape = 0
-                    self.energy -= 3
-                    self.player_sprite = PlayerCharacter(self.shape)
-                elif key == arcade.key.NUM_2 and self.shape != 1:
-                    self.shape = 1
-                    self.energy -= 3
-                    self.player_sprite = PlayerCharacter(self.shape)
-                elif key == arcade.key.NUM_3 and self.shape != 2:
-                    self.shape = 2
-                    self.energy -= 3
-                    self.player_sprite = PlayerCharacter(self.shape)
-                else:
-                    print("Not available or already this shape")
-                
+            if key == arcade.key.KEY_1 and self.shape != 0:
+                player_pos = (self.player_sprite.center_x, self.player_sprite.center_y)
+                self.shape = 0
+                self.energy -= 3
+                self.scene[LAYER_NAME_PLAYER].remove(self.player_sprite)
+                self.player_sprite = PlayerCharacter(self.shape)
+                self.player_sprite.center_x = player_pos[0]
+                self.player_sprite.center_y = player_pos[1]
+
+                self.scene.add_sprite(LAYER_NAME_PLAYER, self.player_sprite)
+                self.physics_engine = arcade.PhysicsEnginePlatformer(
+                    self.player_sprite,
+                    platforms=self.scene[LAYER_NAME_MOVING_PLATFORMS],
+                    gravity_constant=GRAVITY,
+                    ladders=self.scene[LAYER_NAME_LADDERS],
+                    walls=self.scene[LAYER_NAME_PLATFORMS],
+                )
+            if key == arcade.key.KEY_2 and self.shape != 1:
+                player_pos = (self.player_sprite.center_x, self.player_sprite.center_y)
+                self.shape = 1
+                self.energy -= 3
+                self.scene[LAYER_NAME_PLAYER].remove(self.player_sprite)
+                self.player_sprite = PlayerCharacter(self.shape)
+                self.player_sprite.center_x = player_pos[0]
+                self.player_sprite.center_y = player_pos[1]
+
+                self.scene.add_sprite(LAYER_NAME_PLAYER, self.player_sprite)
+                self.physics_engine = arcade.PhysicsEnginePlatformer(
+                    self.player_sprite,
+                    platforms=self.scene[LAYER_NAME_MOVING_PLATFORMS],
+                    gravity_constant=GRAVITY,
+                    ladders=self.scene[LAYER_NAME_LADDERS],
+                    walls=self.scene[LAYER_NAME_PLATFORMS],
+                )
+            if key == arcade.key.KEY_3 and self.shape != 2:
+                player_pos = (self.player_sprite.center_x, self.player_sprite.center_y)
+                self.shape = 2
+                self.energy -= 3
+                self.scene[LAYER_NAME_PLAYER].remove(self.player_sprite)
+                self.player_sprite = PlayerCharacter(self.shape)
+                self.player_sprite.center_x = player_pos[0]
+                self.player_sprite.center_y = player_pos[1]
+
+                self.scene.add_sprite(LAYER_NAME_PLAYER, self.player_sprite)
+                self.physics_engine = arcade.PhysicsEnginePlatformer(
+                    self.player_sprite,
+                    platforms=self.scene[LAYER_NAME_MOVING_PLATFORMS],
+                    gravity_constant=GRAVITY,
+                    ladders=self.scene[LAYER_NAME_LADDERS],
+                    walls=self.scene[LAYER_NAME_PLATFORMS],
+                )
+            
+        if key == arcade.key.Q:
+            self.energy += 1
         self.process_keychange()
 
     def on_key_release(self, key, modifiers):
