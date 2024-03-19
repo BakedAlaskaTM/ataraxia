@@ -215,12 +215,12 @@ class PlayerCharacter(Entity):
                 self.cur_texture += 1
                 if self.cur_texture > 23:
                     self.cur_texture = 0
-                self.texture = self.jump_textures[self.cur_texture][self.facing_direction]
+                self.texture = self.jump_textures[self.cur_texture // 4][self.facing_direction]
             else:
                 self.texture = self.jump_textures[0][self.facing_direction]
             return
         elif self.change_y < 0 and not self.is_on_ladder:
-            if self.shape == 3:
+            if self.shape == 2:
                 self.cur_texture += 1
                 if self.cur_texture > 23:
                     self.cur_texture = 0
@@ -315,9 +315,11 @@ class GameView(arcade.View):
         self.health = 100
         self.energy = 0
         self.shape = 0
+        self.fly_speed = 0
 
         # Sensing variables
         self.can_interact = False
+        self.is_flying = False
 
         # Variables to change player spawnpoint
         self.spawnpoint = (PLAYER_START_X, PLAYER_START_Y)
@@ -489,15 +491,20 @@ class GameView(arcade.View):
         if self.up_pressed and not self.down_pressed:
             if self.physics_engine.is_on_ladder():
                 self.player_sprite.change_y = PLAYER_WALK_SPEED
-            elif (
-                self.physics_engine.can_jump(y_distance=10)
-                and not self.jump_needs_reset
-            ):
-                self.player_sprite.change_y = PLAYER_JUMP_SPEED
-                self.jump_needs_reset = True
+            elif self.shape == 2:
+                self.fly_speed += 5
+            else:
+                if (
+                    self.physics_engine.can_jump(y_distance=10)
+                    and not self.jump_needs_reset
+                ):
+                    self.player_sprite.change_y = PLAYER_JUMP_SPEED
+                    self.jump_needs_reset = True
         elif self.down_pressed and not self.up_pressed:
             if self.physics_engine.is_on_ladder():
                 self.player_sprite.change_y = -PLAYER_WALK_SPEED
+            elif self.shape == 2:
+                self.fly_speed -= 5
 
         # Process up/down when on a ladder and no movement
         if self.physics_engine.is_on_ladder():
@@ -525,8 +532,12 @@ class GameView(arcade.View):
 
         if key == arcade.key.UP or key == arcade.key.W:
             self.up_pressed = True
+            if self.shape == 2:
+                self.is_flying = True
         elif key == arcade.key.DOWN or key == arcade.key.S:
             self.down_pressed = True
+            if self.shape == 2:
+                self.is_flying = True
         elif key == arcade.key.LEFT or key == arcade.key.A:
             self.left_pressed = True
         elif key == arcade.key.RIGHT or key == arcade.key.D:
@@ -601,8 +612,12 @@ class GameView(arcade.View):
         if key == arcade.key.UP or key == arcade.key.W:
             self.up_pressed = False
             self.jump_needs_reset = False
+            if self.shape == 2:
+                self.is_flying = False
         elif key == arcade.key.DOWN or key == arcade.key.S:
             self.down_pressed = False
+            if self.shape == 2:
+                self.is_flying = False
         elif key == arcade.key.LEFT or key == arcade.key.A:
             self.left_pressed = False
         elif key == arcade.key.RIGHT or key == arcade.key.D:
@@ -709,7 +724,13 @@ class GameView(arcade.View):
                 self.energy += 1
                 self.scene[LAYER_NAME_ORBS].remove(collision)
             
-
+        if self.shape == 2:
+            self.player_sprite.change_y = self.fly_speed*delta_time
+            if not self.physics_engine.can_jump():
+                self.fly_speed -= GRAVITY
+            if not self.is_flying:
+                if self.fly_speed != 0:
+                    self.fly_speed -= (self.fly_speed / abs(self.fly_speed)) * 5
 
         if self.player_sprite.center_y < 0:
             self.player_sprite.center_x = self.tile_map.tile_width * TILE_SCALING * self.spawnpoint[0]
