@@ -18,19 +18,16 @@
             "scale": 3,
             "selectedLayer": 7,
             "viewCenter": {
-                "x": 237.33333333333331,
-                "y": 289.33333333333337
+                "x": 376.16666666666663,
+                "y": 330.16666666666663
             }
         },
         "1.tmx": {
-            "expandedObjectLayers": [
-                11
-            ],
-            "scale": 1.5,
-            "selectedLayer": 6,
+            "scale": 1,
+            "selectedLayer": 8,
             "viewCenter": {
-                "x": 378.66666666666663,
-                "y": 458
+                "x": 863.5,
+                "y": 383.5
             }
         },
         "C:/Users/devin/AppData/Local/Programs/Python/Python311/Lib/site-packages/arcade/resources/tiled_maps/map_with_ladders.json": {
@@ -61,7 +58,7 @@
             }
         }
     },
-    "last.imagePath": "//wbfp02.westlake.local/shomes/ds21616/Documents/13DTP/Assessment/91906 - DevinShen/assets/Tiles/Testing",
+    "last.imagePath": "C:/Users/devin/Documents/13DTP/91906 - DevinShen/91906---DevinShen/assets/Tiles/Testing",
     "map.height": 40,
     "map.lastUsedFormat": "tmx",
     "map.tileHeight": 16,

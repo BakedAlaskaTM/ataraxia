@@ -5,8 +5,8 @@ import arcade, os, random, math
 MAIN_PATH = os.path.dirname(os.path.abspath(__file__))
 
 # Window Settings
-SCREEN_WIDTH = 1920
-SCREEN_HEIGHT = 1080
+SCREEN_WIDTH = 1280
+SCREEN_HEIGHT = 720
 SCREEN_TITLE = "Ataraxia V1"
 
 # Sprite Scaling
@@ -178,8 +178,7 @@ class PlayerCharacter(Entity):
     def __init__(self, shape):
 
         # Inherit from parent class (Entity)
-        super().__init__("Friendly", f"Player{shape+1}", ["Idle",
-"Walk", "Jump"])
+        super().__init__("Friendly", f"Player{shape+1}", ["Idle", "Walk", "Jump"])
 
         # Track state
         self.shape = shape
@@ -348,7 +347,7 @@ class GameView(arcade.View):
         self.gui_camera = None
 
         # Level setup
-        self.level = 0
+        self.level = 1
 
         # Primary camera for scrolling the screen
         self.camera = None
@@ -434,7 +433,7 @@ class GameView(arcade.View):
         # Add in enemies
 
 
-        arcade.set_background_color((255, 255, 255))
+        arcade.set_background_color((99, 245, 255))
 
         # Set background colour
         #if self.tile_map.background_color:
