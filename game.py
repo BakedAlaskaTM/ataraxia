@@ -84,18 +84,18 @@ class Entity(arcade.Sprite):
         if "Jump" in available_anims:
             # Jumping and falling sprites
             frame_num = 0
-            for path in os.listdir(f"{main_path}/jump"):   
+            for path in os.listdir(f"{main_path}/jump"):
                 frame_num += 1
-            
+
             self.jump_textures = []
             for i in range(frame_num):
                 texture = load_texture_pair(f"{main_path}/jump/{i}.png")
                 self.jump_textures.append(texture)
 
             frame_num = 0
-            for path in os.listdir(f"{main_path}/fall"):   
+            for path in os.listdir(f"{main_path}/fall"):
                 frame_num += 1
-            
+
             self.fall_textures = []
             for i in range(frame_num):
                 texture = load_texture_pair(f"{main_path}/fall/{i}.png")
@@ -104,9 +104,9 @@ class Entity(arcade.Sprite):
         if "Walk" in available_anims:
             # Walking frames
             frame_num = 0
-            for path in os.listdir(f"{main_path}/walk"):   
+            for path in os.listdir(f"{main_path}/walk"):
                 frame_num += 1
-            
+
             self.walk_textures = []
             for i in range(frame_num):
                 texture = load_texture_pair(f"{main_path}/walk/{i}.png")
@@ -118,7 +118,7 @@ class Entity(arcade.Sprite):
             for path in os.listdir(f"{main_path}/climb"):
                 if os.path.isfile(os.path.join(main_path, path)):
                     frame_num += 1
-            
+
             #self.climbing_textures = []
             for i in range(frame_num):
                 texture = load_texture_pair(f"{main_path}/climb/{i}.png")
@@ -128,7 +128,7 @@ class Entity(arcade.Sprite):
             frame_num = 0
             for path in os.listdir(f"{main_path}/wave"):
                 frame_num += 1
-            
+
             self.wave_textures = []
             for i in range(frame_num):
                 texture = load_texture_pair(f"{main_path}/wave/{i}.png")
@@ -141,9 +141,10 @@ class Entity(arcade.Sprite):
         self.set_hit_box(self.texture.hit_box_points)
 
 # Collectible Objects Template class
-        
+
 class Collectible(Entity):
-    """Template for collectible items like orbs and potions and weapons and stuff."""
+    """Template for collectible items like orbs and potions and
+weapons and stuff."""
     def __init__(self, sprite_folder):
         # Inherit from parent class (Entity)
         super().__init__("InanimateObjects", sprite_folder, ["Idle"])
@@ -151,7 +152,7 @@ class Collectible(Entity):
 
 
 # Energy Orb class
-        
+
 class Orb(Collectible):
     """Energy Orb Sprite"""
 
@@ -159,7 +160,7 @@ class Orb(Collectible):
         # Inherit from parent class (Collectible)
         super().__init__("EnergyOrb")
         self.type = None
-    
+
     def update_animation(self, delta_time: float = 1 / 60):
         self.cur_texture += 1
         if self.cur_texture > 23:
@@ -170,14 +171,15 @@ class Orb(Collectible):
 
 
 # Player Class
-        
+
 class PlayerCharacter(Entity):
     """Player Sprite"""
 
     def __init__(self, shape):
 
         # Inherit from parent class (Entity)
-        super().__init__("Friendly", f"Player{shape+1}", ["Idle", "Walk", "Jump"])
+        super().__init__("Friendly", f"Player{shape+1}", ["Idle",
+"Walk", "Jump"])
 
         # Track state
         self.shape = shape
@@ -186,7 +188,7 @@ class PlayerCharacter(Entity):
         self.is_on_ladder = False
 
     def update_animation(self, delta_time: float = 1 / 60):
-        
+
         # Change direction if needed
         if self.change_x < 0 and self.facing_direction == RIGHT_FACING:
             self.facing_direction = LEFT_FACING
@@ -195,7 +197,7 @@ class PlayerCharacter(Entity):
 
         # Hierarchy of animations:
         # Climbing, Jumping, Idle, Walking
-        
+
         # Climbing animation
         if self.is_on_ladder:
             self.climbing = True
@@ -208,7 +210,7 @@ class PlayerCharacter(Entity):
         if self.climbing:
             self.texture = self.climbing_textures[self.cur_texture // 4]
             return
-        
+
         # Jumping animation
         if self.change_y > 0 and not self.is_on_ladder:
             if self.shape == 2:
@@ -228,7 +230,7 @@ class PlayerCharacter(Entity):
             else:
                 self.texture = self.fall_textures[0][self.facing_direction]
             return
-        
+
         # Idle animation
         if self.change_x == 0:
             self.cur_texture += 1
@@ -237,12 +239,12 @@ class PlayerCharacter(Entity):
                     self.cur_texture = 0
                 self.texture = self.idle_textures[self.cur_texture // 4][self.facing_direction]
             else:
-                
+
                 if self.cur_texture > 15:
                     self.cur_texture = 0
                 self.texture = self.idle_textures[self.cur_texture // 8][self.facing_direction]
             return
-        
+
         # Walking animation
         self.cur_texture += 1
         if self.shape == 2:
@@ -255,7 +257,7 @@ class PlayerCharacter(Entity):
             self.texture = self.walk_textures[self.cur_texture // 4][self.facing_direction]
 
 # Villager NPC
-        
+
 class DefaultVillager(Entity):
     """Basic Villager Sprite"""
     def __init__(self, villager_id):
@@ -276,11 +278,11 @@ class DefaultVillager(Entity):
             self.texture = self.idle_textures[0][self.facing_direction]
 
         # Wave animation
-            
+
         elif self.wave == True:
             self.texture = self.wave_textures[0][self.facing_direction]
         return
-    
+
     def update(self, player_pos, tile_map, delta_time: float = 1 / 60):
         if abs(self.center_x - player_pos[0]) < 1*TILE_SCALING*tile_map.tile_width and abs(self.center_y-player_pos[1]) < 0.5*TILE_SCALING*tile_map.tile_height:
             self.interactable = True
@@ -316,10 +318,15 @@ class GameView(arcade.View):
         self.energy = 0
         self.shape = 0
         self.fly_speed = 0
+        self.thrust = 10
 
         # Sensing variables
         self.can_interact = False
         self.is_flying = False
+
+        # Control variables
+        self.delta_time = 0
+        self.time_since_ground = 0
 
         # Variables to change player spawnpoint
         self.spawnpoint = (PLAYER_START_X, PLAYER_START_Y)
@@ -394,7 +401,7 @@ class GameView(arcade.View):
             villager.center_y = math.floor(
                 (cartesian[1]+0.5) * (self.tile_map.tile_height * TILE_SCALING)-TILE_SCALING
             )
-            
+
             self.scene.add_sprite(LAYER_NAME_VILLAGERS, villager)
 
         # Add in energy orbs
@@ -426,7 +433,7 @@ class GameView(arcade.View):
 
         # Add in enemies
 
-        
+
         arcade.set_background_color((255, 255, 255))
 
         # Set background colour
@@ -444,7 +451,7 @@ class GameView(arcade.View):
 
     def on_show_view(self):
         self.setup()
-    
+
     def on_draw(self):
         """Render the screen"""
 
@@ -480,7 +487,7 @@ class GameView(arcade.View):
                 50,
                 (255, 255, 255),
                 18,
-                
+
             )
 
     def process_keychange(self):
@@ -492,7 +499,7 @@ class GameView(arcade.View):
             if self.physics_engine.is_on_ladder():
                 self.player_sprite.change_y = PLAYER_WALK_SPEED
             elif self.shape == 2:
-                self.fly_speed += 5
+                self.fly_speed += (self.thrust - GRAVITY)*self.delta_time
             else:
                 if (
                     self.physics_engine.can_jump(y_distance=10)
@@ -504,7 +511,7 @@ class GameView(arcade.View):
             if self.physics_engine.is_on_ladder():
                 self.player_sprite.change_y = -PLAYER_WALK_SPEED
             elif self.shape == 2:
-                self.fly_speed -= 5
+                self.fly_speed -= (self.thrust + 4*GRAVITY)*self.delta_time
 
         # Process up/down when on a ladder and no movement
         if self.physics_engine.is_on_ladder():
@@ -601,7 +608,7 @@ class GameView(arcade.View):
                     ladders=self.scene[LAYER_NAME_LADDERS],
                     walls=self.scene[LAYER_NAME_PLATFORMS],
                 )
-            
+
         if key == arcade.key.Q:
             self.energy += 1
         self.process_keychange()
@@ -630,7 +637,7 @@ class GameView(arcade.View):
             self.interact = False
 
         self.process_keychange()
-    
+
     def center_camera_to_player(self, speed=0.2):
         screen_center_x = self.camera.scale * (self.player_sprite.center_x - (self.camera.viewport_width / 2))
         screen_center_y = self.camera.scale * (self.player_sprite.center_y - (self.camera.viewport_height / 2))
@@ -638,15 +645,27 @@ class GameView(arcade.View):
             screen_center_x = 0
         if screen_center_y < 0:
             screen_center_y = 0
-        player_centered = (screen_center_x, screen_center_y)    
+        player_centered = (screen_center_x, screen_center_y)
 
         self.camera.move_to(player_centered, speed)
-    
+
     def on_update(self, delta_time):
         """Movement and game logic"""
 
+        self.delta_time = delta_time
         # Move the player
         self.physics_engine.update()
+
+        # If blaze shape then do helicopter physics
+        if self.shape == 2:
+            self.player_sprite.change_y = self.fly_speed
+            if not self.is_flying:
+                self.fly_speed -= 4*GRAVITY*delta_time
+            if self.physics_engine.can_jump() and self.time_since_ground > 1:
+                self.fly_speed = 0
+                self.time_since_ground = 0
+            self.time_since_ground += delta_time
+
 
         # Update animations for the player
         if self.physics_engine.can_jump():
@@ -660,7 +679,7 @@ class GameView(arcade.View):
         else:
             self.player_sprite.is_on_ladder = False
             self.process_keychange()
-        
+
         # Update animations for other things
         self.scene.update_animation(
             delta_time,
@@ -716,21 +735,15 @@ class GameView(arcade.View):
                     self.prev_spawnpoint = collision
                     print(f"New spawnpoint at {self.spawnpoint}")
             self.interact = False
-    
+
         # Check for collisions with energy orbs
-        player_collision_list = arcade.check_for_collision_with_list(self.player_sprite,  self.scene[LAYER_NAME_ORBS])
+        player_collision_list = arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_ORBS])
         for collision in player_collision_list:
             if collision.type == "Energy":
                 self.energy += 1
                 self.scene[LAYER_NAME_ORBS].remove(collision)
-            
-        if self.shape == 2:
-            self.player_sprite.change_y = self.fly_speed*delta_time
-            if not self.physics_engine.can_jump():
-                self.fly_speed -= GRAVITY
-            if not self.is_flying:
-                if self.fly_speed != 0:
-                    self.fly_speed -= (self.fly_speed / abs(self.fly_speed)) * 5
+
+
 
         if self.player_sprite.center_y < 0:
             self.player_sprite.center_x = self.tile_map.tile_width * TILE_SCALING * self.spawnpoint[0]
