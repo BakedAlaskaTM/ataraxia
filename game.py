@@ -316,10 +316,15 @@ class GameView(arcade.View):
         self.energy = 0
         self.shape = 0
         self.fly_speed = 0
+        self.thrust = 10
 
         # Sensing variables
         self.can_interact = False
         self.is_flying = False
+
+        # Control variables
+        self.delta_time = 0
+        self.time_since_ground = 0
 
         # Variables to change player spawnpoint
         self.spawnpoint = (PLAYER_START_X, PLAYER_START_Y)
@@ -492,7 +497,7 @@ class GameView(arcade.View):
             if self.physics_engine.is_on_ladder():
                 self.player_sprite.change_y = PLAYER_WALK_SPEED
             elif self.shape == 2:
-                self.fly_speed += 5
+                self.fly_speed += (self.thrust - GRAVITY)*self.delta_time
             else:
                 if (
                     self.physics_engine.can_jump(y_distance=10)
@@ -504,7 +509,7 @@ class GameView(arcade.View):
             if self.physics_engine.is_on_ladder():
                 self.player_sprite.change_y = -PLAYER_WALK_SPEED
             elif self.shape == 2:
-                self.fly_speed -= 5
+                self.fly_speed -= (self.thrust + 4*GRAVITY)*self.delta_time
 
         # Process up/down when on a ladder and no movement
         if self.physics_engine.is_on_ladder():
@@ -645,8 +650,20 @@ class GameView(arcade.View):
     def on_update(self, delta_time):
         """Movement and game logic"""
 
+        self.delta_time = delta_time
         # Move the player
         self.physics_engine.update()
+
+        # If blaze shape then do helicopter physics
+        if self.shape == 2:
+            self.player_sprite.change_y = self.fly_speed
+            if not self.is_flying:
+                self.fly_speed -= 4*GRAVITY*delta_time
+            if self.physics_engine.can_jump() and self.time_since_ground > 1:
+                self.fly_speed = 0
+                self.time_since_ground = 0
+            self.time_since_ground += delta_time
+                
 
         # Update animations for the player
         if self.physics_engine.can_jump():
@@ -723,14 +740,8 @@ class GameView(arcade.View):
             if collision.type == "Energy":
                 self.energy += 1
                 self.scene[LAYER_NAME_ORBS].remove(collision)
-            
-        if self.shape == 2:
-            self.player_sprite.change_y = self.fly_speed*delta_time
-            if not self.physics_engine.can_jump():
-                self.fly_speed -= GRAVITY
-            if not self.is_flying:
-                if self.fly_speed != 0:
-                    self.fly_speed -= (self.fly_speed / abs(self.fly_speed)) * 5
+        
+        
 
         if self.player_sprite.center_y < 0:
             self.player_sprite.center_x = self.tile_map.tile_width * TILE_SCALING * self.spawnpoint[0]
