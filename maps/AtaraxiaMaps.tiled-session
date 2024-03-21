@@ -18,8 +18,8 @@
             "scale": 3,
             "selectedLayer": 7,
             "viewCenter": {
-                "x": 376,
-                "y": 198
+                "x": 375.66666666666663,
+                "y": 197.66666666666666
             }
         },
         "1.tmx": {
@@ -58,7 +58,7 @@
             }
         }
     },
-    "last.imagePath": "C:/Users/devin/Documents/13DTP/91906 - DevinShen/91906---DevinShen/assets/Tiles/Testing",
+    "last.imagePath": "//wbfp02.westlake.local/shomes/ds21616/Documents/13DTP/Assessment/91906 - DevinShen/assets/Tiles/Testing",
     "map.height": 40,
     "map.lastUsedFormat": "tmx",
     "map.tileHeight": 16,

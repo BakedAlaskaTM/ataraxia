@@ -10,9 +10,9 @@ SCREEN_HEIGHT = 1080
 SCREEN_TITLE = "Ataraxia V1"
 
 # Sprite Scaling
-CHARACTER_SCALING = 10
-TILE_SCALING = 10
-COLLECTIBLE_SCALING = 4
+CHARACTER_SCALING = 5
+TILE_SCALING = 5
+COLLECTIBLE_SCALING = 2
 
 # Sprite facing direction
 RIGHT_FACING = 0
@@ -121,10 +121,10 @@ class Entity(arcade.Sprite):
                 if os.path.isfile(os.path.join(main_path, path)):
                     frame_num += 1
 
-            #self.climbing_textures = []
+            self.climbing_textures = []
             for i in range(frame_num):
                 texture = load_texture_pair(f"{main_path}/climb/{i}.png")
-                #self.climbing_textures.append(texture)
+                self.climbing_textures.append(texture)
 
         if "Wave" in available_anims:
             frame_num = 0
@@ -179,14 +179,19 @@ class PlayerCharacter(Entity):
 
     def __init__(self, shape):
 
+        if shape == 0:
+            available_anims = ["Idle", "Walk", "Jump", "Climb"]
         # Inherit from parent class (Entity)
-        super().__init__("Friendly", f"Player{shape+1}", ["Idle", "Walk", "Jump"])
+        super().__init__("Friendly", f"Player{shape+1}", available_anims)
 
         # Track state
         self.shape = shape
         self.jumping = False
         self.climbing = False
         self.is_on_ladder = False
+        if shape == 1:
+            self.set_hit_box([[-7, -7], [7, -7], [7, -1], [-7, -1]])
+            print(self.get_hit_box())
 
     def update_animation(self, delta_time: float = 1 / 60):
 
@@ -206,7 +211,7 @@ class PlayerCharacter(Entity):
             self.climbing = False
         if self.climbing and abs(self.change_y) > 1:
             self.cur_texture += 1
-            if self.cur_texture > 7:
+            if self.cur_texture > 31:
                 self.cur_texture = 0
         if self.climbing:
             self.texture = self.climbing_textures[self.cur_texture // 4]
@@ -290,6 +295,35 @@ class DefaultVillager(Entity):
         else:
             self.interactable = False
         return
+
+# Menu Screen
+class MainMenu(arcade.View):
+    """
+    The main menu screen displayed at the beginning.
+    """
+
+    def on_show_view(self):
+        """Called when showing this view."""
+        arcade.set_background_color((188, 188, 255))
+
+    def on_draw(self):
+        """Display the menu"""
+        self.clear()
+        arcade.draw_text(
+            "Click to start game",
+            SCREEN_WIDTH / 2,
+            SCREEN_HEIGHT / 2,
+            (0, 0, 0),
+            font_size = 30,
+            anchor_x = "center",
+        )
+
+    def on_mouse_press(self, _x, _y, _button, _modifiers):
+        """Use a mouse press to advance to the actual game view."""
+        game_view = GameView()
+        self.window.show_view(game_view)
+
+
 
 # Actual Game
 class GameView(arcade.View):
@@ -765,7 +799,7 @@ class GameView(arcade.View):
 def main():
     """Main Function"""
     window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
-    start_view = GameView()
+    start_view = MainMenu()
     window.show_view(start_view)
     #start_view.setup()
     arcade.run()
