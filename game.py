@@ -5,8 +5,8 @@ import arcade, os, random, math
 MAIN_PATH = os.path.dirname(os.path.abspath(__file__))
 
 # Window Settings
-SCREEN_WIDTH = 1280
-SCREEN_HEIGHT = 720
+SCREEN_WIDTH = 1920
+SCREEN_HEIGHT = 1080
 SCREEN_TITLE = "Ataraxia V1"
 
 # Sprite Scaling
@@ -25,6 +25,7 @@ LAYER_NAME_VILLAGERS = "Villagers"
 
 # Object Layers
 LAYER_NAME_ORBS = "Orbs"
+LAYER_NAME_TEXT = "Text"
 
 # Tile Layers
 LAYER_NAME_PLATFORMS = "Platforms"
@@ -33,6 +34,7 @@ LAYER_NAME_LADDERS = "Ladders"
 LAYER_NAME_BACKGROUND = "Background"
 LAYER_NAME_STATUES = "Statues"
 LAYER_NAME_SPAWNPOINT = "Current Statue"
+
 
 # Physics things
 GRAVITY = 1
@@ -418,6 +420,13 @@ class GameView(arcade.View):
             )
             orb.type = orb_object.properties["type"]
             self.scene.add_sprite(LAYER_NAME_ORBS, orb)
+
+        #text_layer = self.tile_map.object_lists[LAYER_NAME_TEXT]
+        #for text_object in text_layer:
+        #    cartesian = self.tile_map.get_cartesian(
+        #        text_object.shape[0], text_object.shape[1]
+        #    )
+
 
         # Setup player at specific coordinates
         self.player_sprite = PlayerCharacter(self.shape)

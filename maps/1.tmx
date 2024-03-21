@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.10.2" orientation="orthogonal" renderorder="right-down" width="60" height="40" tilewidth="16" tileheight="16" infinite="0" nextlayerid="12" nextobjectid="10">
+<map version="1.9" tiledversion="1.9.2" orientation="orthogonal" renderorder="right-down" width="60" height="40" tilewidth="16" tileheight="16" infinite="0" nextlayerid="14" nextobjectid="12">
  <tileset firstgid="1" source="Testing Tiles.tsx"/>
  <layer id="2" name="Background" width="60" height="40">
   <data encoding="csv">
@@ -319,4 +319,9 @@
   </object>
  </objectgroup>
  <objectgroup id="9" name="Enemies"/>
+ <objectgroup id="13" name="Text">
+  <object id="10" x="76.5" y="494.5" width="83" height="19">
+   <text wrap="1">Go right</text>
+  </object>
+ </objectgroup>
 </map>
