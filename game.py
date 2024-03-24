@@ -109,6 +109,7 @@ class Entity(arcade.Sprite):
             for path in os.listdir(f"{main_path}/walk"):
                 frame_num += 1
 
+            print(frame_num)
             self.walk_textures = []
             for i in range(frame_num):
                 texture = load_texture_pair(f"{main_path}/walk/{i}.png")
@@ -117,9 +118,9 @@ class Entity(arcade.Sprite):
         if "Climb" in available_anims:
         # Climbing frames
             frame_num = 0
-            for path in os.listdir(f"{main_path}/climb"):
-                if os.path.isfile(os.path.join(main_path, path)):
-                    frame_num += 1
+            for path in os.listdir(f"{main_path}/climb"):    
+                frame_num += 1
+
 
             self.climbing_textures = []
             for i in range(frame_num):
@@ -181,6 +182,8 @@ class PlayerCharacter(Entity):
 
         if shape == 0:
             available_anims = ["Idle", "Walk", "Jump", "Climb"]
+        else:
+            available_anims = ["Idle", "Walk", "Jump"]
         # Inherit from parent class (Entity)
         super().__init__("Friendly", f"Player{shape+1}", available_anims)
 
@@ -205,17 +208,19 @@ class PlayerCharacter(Entity):
         # Climbing, Jumping, Idle, Walking
 
         # Climbing animation
-        if self.is_on_ladder:
-            self.climbing = True
-        if not self.is_on_ladder and self.climbing:
-            self.climbing = False
-        if self.climbing and abs(self.change_y) > 1:
-            self.cur_texture += 1
-            if self.cur_texture > 31:
-                self.cur_texture = 0
-        if self.climbing:
-            self.texture = self.climbing_textures[self.cur_texture // 4]
-            return
+        if self.shape == 0:
+            if self.is_on_ladder:
+                self.climbing = True
+            if not self.is_on_ladder and self.climbing:
+                self.climbing = False
+            if self.climbing and abs(self.change_y) > 1:
+                self.cur_texture += 1
+                if self.cur_texture > 31:
+                    self.cur_texture = 0
+            if self.climbing:
+                print(len(self.climbing_textures))
+                self.texture = self.climbing_textures[self.cur_texture // 4][self.facing_direction]
+                return
 
         # Jumping animation
         if self.change_y > 0 and not self.is_on_ladder:
@@ -630,7 +635,6 @@ class GameView(arcade.View):
                     self.player_sprite,
                     platforms=self.scene[LAYER_NAME_MOVING_PLATFORMS],
                     gravity_constant=GRAVITY,
-                    ladders=self.scene[LAYER_NAME_LADDERS],
                     walls=self.scene[LAYER_NAME_PLATFORMS],
                 )
             if key == arcade.key.KEY_3 and self.shape != 2:
@@ -647,7 +651,6 @@ class GameView(arcade.View):
                     self.player_sprite,
                     platforms=self.scene[LAYER_NAME_MOVING_PLATFORMS],
                     gravity_constant=GRAVITY,
-                    ladders=self.scene[LAYER_NAME_LADDERS],
                     walls=self.scene[LAYER_NAME_PLATFORMS],
                 )
 
