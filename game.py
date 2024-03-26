@@ -424,7 +424,7 @@ class GameView(arcade.View):
 
         # Read in Tiled map
         self.tile_map = arcade.load_tilemap(map_name, TILE_SCALING, layer_options)
-
+        
         # Initialise new scene with the tilemap
         self.scene = arcade.Scene.from_tilemap(self.tile_map)
 
@@ -802,7 +802,7 @@ class GameView(arcade.View):
 def main():
     """Main Function"""
     window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
-    start_view = MainMenu()
+    start_view = GameView()
     window.show_view(start_view)
     #start_view.setup()
     arcade.run()
