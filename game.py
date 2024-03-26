@@ -5,8 +5,8 @@ import arcade, os, random, math
 MAIN_PATH = os.path.dirname(os.path.abspath(__file__))
 
 # Window Settings
-SCREEN_WIDTH = 1920
-SCREEN_HEIGHT = 1080
+SCREEN_WIDTH = 1280
+SCREEN_HEIGHT = 720
 SCREEN_TITLE = "Ataraxia V1"
 
 # Sprite Scaling
@@ -44,7 +44,7 @@ PLAYER_JUMP_SPEED = 20
 
 # Player spawnpoints
 PLAYER_START_X = 3
-PLAYER_START_Y = 3
+PLAYER_START_Y = 18
 
 # Loading mirrored sprites
 def load_texture_pair(filename):
@@ -388,7 +388,7 @@ class GameView(arcade.View):
         self.gui_camera = None
 
         # Level setup
-        self.level = 1
+        self.level = 1.1
 
         # Primary camera for scrolling the screen
         self.camera = None
@@ -710,11 +710,7 @@ class GameView(arcade.View):
                 self.fly_speed = 0
                 self.time_since_ground = 0
             self.time_since_ground += delta_time
-<<<<<<< HEAD
                 
-=======
-
->>>>>>> 89f427c1ec53e7b674962ec5e846de3bb9f58611
 
         # Update animations for the player
         if self.physics_engine.can_jump():
@@ -768,6 +764,7 @@ class GameView(arcade.View):
             for villager in self.scene[LAYER_NAME_VILLAGERS]:
                 if villager.id == interactable_villager:
                     villager.wave = True
+                    self.energy += 1
                     print("please")
 
         # Check for collisions with the statue
@@ -783,6 +780,7 @@ class GameView(arcade.View):
                     self.scene[LAYER_NAME_STATUES].remove(collision)
                     self.prev_spawnpoint = collision
                     print(f"New spawnpoint at {self.spawnpoint}")
+                    self.energy = 3
             self.interact = False
 
         # Check for collisions with energy orbs
@@ -791,13 +789,8 @@ class GameView(arcade.View):
             if collision.type == "Energy":
                 self.energy += 1
                 self.scene[LAYER_NAME_ORBS].remove(collision)
-<<<<<<< HEAD
         
         
-=======
-
-
->>>>>>> 89f427c1ec53e7b674962ec5e846de3bb9f58611
 
         if self.player_sprite.center_y < 0:
             self.player_sprite.center_x = self.tile_map.tile_width * TILE_SCALING * self.spawnpoint[0]

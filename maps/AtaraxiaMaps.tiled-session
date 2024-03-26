@@ -15,22 +15,31 @@
                 10,
                 12
             ],
-            "scale": 0.5,
-            "selectedLayer": 9,
+            "scale": 1,
+            "selectedLayer": 7,
             "viewCenter": {
-                "x": -484,
-                "y": -2
+                "x": 505.5,
+                "y": 79.5
+            }
+        },
+        "1.1.tmx": {
+            "expandedObjectLayers": [
+                5,
+                6
+            ],
+            "scale": 2.0725,
+            "selectedLayer": 4,
+            "viewCenter": {
+                "x": 300.3618817852835,
+                "y": 1333.8962605548854
             }
         },
         "1.tmx": {
-            "expandedObjectLayers": [
-                7
-            ],
-            "scale": 0.75,
-            "selectedLayer": 2,
+            "scale": 0.4769,
+            "selectedLayer": 8,
             "viewCenter": {
-                "x": 801.3333333333333,
-                "y": -32
+                "x": 867.0580834556511,
+                "y": 724.4705388970434
             }
         },
         "C:/Users/devin/AppData/Local/Programs/Python/Python311/Lib/site-packages/arcade/resources/tiled_maps/map_with_ladders.json": {
@@ -44,10 +53,13 @@
                 "y": 1088.908939014202
             }
         },
+        "NPCs.tsx": {
+            "scaleInDock": 1
+        },
         "Testing Tiles.tsx": {
             "dynamicWrapping": true,
-            "scaleInDock": 11,
-            "scaleInEditor": 1
+            "scaleInDock": 0.03125,
+            "scaleInEditor": 0.75
         },
         "testmap.tmj": {
             "expandedObjectLayers": [
@@ -63,24 +75,25 @@
     },
     "last.exportedFilePath": "//wbfp02.westlake.local/shomes/ds21616/Documents/13DTP/Assessment/91906 - DevinShen/maps",
     "last.imagePath": "//wbfp02.westlake.local/shomes/ds21616/Documents/13DTP/Assessment/91906 - DevinShen/assets/Tiles/Testing",
-    "map.fixedSize": false,
-    "map.height": 40,
+    "map.fixedSize": true,
+    "map.height": 100,
     "map.lastUsedExportFilter": "All Files (*)",
     "map.lastUsedFormat": "tmx",
     "map.tileHeight": 16,
     "map.tileWidth": 16,
-    "map.width": 60,
+    "map.width": 400,
     "openFiles": [
         "0.tmx",
-        "Testing Tiles.tsx"
+        "Testing Tiles.tsx",
+        "1.tmx"
     ],
     "project": "AtaraxiaMaps.tiled-project",
     "property.type": "string",
     "recentFiles": [
+        "0.tmx",
         "1.tmx",
-        "testmap.tmj",
         "Testing Tiles.tsx",
-        "0.tmx"
+        "testmap.tmj"
     ],
     "tileset.lastUsedFormat": "tsx",
     "tileset.type": 1
