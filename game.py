@@ -5,8 +5,8 @@ import arcade, os, random, math
 MAIN_PATH = os.path.dirname(os.path.abspath(__file__))
 
 # Window Settings
-SCREEN_WIDTH = 1280
-SCREEN_HEIGHT = 720
+SCREEN_WIDTH = 1920
+SCREEN_HEIGHT = 1080
 SCREEN_TITLE = "Ataraxia V1"
 
 # Sprite Scaling
@@ -34,7 +34,8 @@ LAYER_NAME_LADDERS = "Ladders"
 LAYER_NAME_BACKGROUND = "Background"
 LAYER_NAME_STATUES = "Statues"
 LAYER_NAME_SPAWNPOINT = "Current Statue"
-
+LAYER_NAME_GOAL = "Goal"
+LAYER_NAME_CAVE = "Cave"
 
 # Physics things
 GRAVITY = 1
@@ -55,6 +56,12 @@ def load_texture_pair(filename):
         arcade.load_texture(filename),
         arcade.load_texture(filename, flipped_horizontally=True),
     ]
+
+def calculate_distance(pos_1, pos_2):
+    distance_x = pos_1[0] - pos_2[0]
+    distance_y = pos_1[1] - pos_2[1]
+    return math.sqrt(distance_x**2 + distance_y**2)
+
 
 # Entity superclass
 class Entity(arcade.Sprite):
@@ -459,6 +466,8 @@ class GameView(arcade.View):
             )
             orb.type = orb_object.properties["type"]
             self.scene.add_sprite(LAYER_NAME_ORBS, orb)
+        
+        self.text_layer = self.tile_map.object_lists[LAYER_NAME_TEXT]
 
         #text_layer = self.tile_map.object_lists[LAYER_NAME_TEXT]
         #for text_object in text_layer:
@@ -507,9 +516,26 @@ class GameView(arcade.View):
 
         # Activate game camera
         self.camera.use()
-
+        
+        
         # Draw the scene
         self.scene.draw(pixelated=True)
+
+        for text in self.text_layer:
+            cartesian = self.tile_map.get_cartesian(
+                text.shape[0], text.shape[1]
+            )
+            if text.properties["colour"] == "1":
+                colour = (255, 255, 255)
+            else:
+                colour = (0, 0, 0)
+            arcade.draw_text(
+                text.properties["text"],
+                cartesian[0]*TILE_SCALING*self.tile_map.tile_width,
+                cartesian[1]*TILE_SCALING*self.tile_map.tile_height,
+                colour,
+                14,
+            )
 
         # Activate the GUI camera to draw GUI elements
         self.gui_camera.use()
@@ -536,7 +562,8 @@ class GameView(arcade.View):
                 18,
 
             )
-
+        
+        
     def process_keychange(self):
         """
         Called when we change a key up/down or we move on/off a ladder.
@@ -748,24 +775,25 @@ class GameView(arcade.View):
         for villager in self.scene[LAYER_NAME_VILLAGERS]:
             villager.update(player_pos=(self.player_sprite.center_x, self.player_sprite.center_y), tile_map=self.tile_map)
 
-        interactable_villager = None
-        # Check if in range of villager
-        for villager in self.scene[LAYER_NAME_VILLAGERS]:
-            if villager.interactable:
-                self.can_interact = True
-                interactable_villager = villager.id
-                break
-            else:
-                villager.wave = False
-                self.can_interact = False
-
-        # Check for interaction with villager
-        if self.interact:
+        if self.shape == 0:
+            interactable_villager = None
+            # Check if in range of villager
             for villager in self.scene[LAYER_NAME_VILLAGERS]:
-                if villager.id == interactable_villager:
-                    villager.wave = True
-                    self.energy += 1
-                    print("please")
+                if villager.interactable:
+                    self.can_interact = True
+                    interactable_villager = villager.id
+                    break
+                else:
+                    villager.wave = False
+                    self.can_interact = False
+
+            # Check for interaction with villager
+            if self.interact:
+                for villager in self.scene[LAYER_NAME_VILLAGERS]:
+                    if villager.id == interactable_villager:
+                        villager.wave = True
+                        self.energy += 1
+                        print("please")
 
         # Check for collisions with the statue
         if self.interact:
@@ -790,7 +818,16 @@ class GameView(arcade.View):
                 self.energy += 1
                 self.scene[LAYER_NAME_ORBS].remove(collision)
         
-        
+        # Reveal tunnels/cave when player approaches
+        for tile in self.scene[LAYER_NAME_CAVE]:
+            distance_to_player = calculate_distance([self.player_sprite.center_x, self.player_sprite.center_y], [tile.center_x, tile.center_y])
+            if distance_to_player < 10*TILE_SCALING*self.tile_map.tile_width:
+                tile.alpha = 255*(max(distance_to_player-5*TILE_SCALING*self.tile_map.tile_width, 0)) / (10*TILE_SCALING*self.tile_map.tile_width)
+
+        # Check for collision with goal/warp portal
+        if len(arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_GOAL])) > 0:
+            self.level += 1
+            self.setup()
 
         if self.player_sprite.center_y < 0:
             self.player_sprite.center_x = self.tile_map.tile_width * TILE_SCALING * self.spawnpoint[0]
