@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<tileset version="1.9" tiledversion="1.9.2" name="Testing Tiles" tilewidth="128" tileheight="128" tilecount="18" columns="0">
+<tileset version="1.9" tiledversion="1.9.2" name="Testing Tiles" tilewidth="128" tileheight="128" tilecount="19" columns="0">
  <grid orientation="orthogonal" width="1" height="1"/>
  <tile id="0">
   <image width="16" height="16" source="../assets/Tiles/Testing/BlackSquare.png"/>
@@ -54,5 +54,8 @@
  </tile>
  <tile id="20">
   <image width="16" height="16" source="../assets/Tiles/Testing/Warp.png"/>
+ </tile>
+ <tile id="21">
+  <image width="16" height="16" source="../assets/Tiles/Testing/SpikeStone.png"/>
  </tile>
 </tileset>

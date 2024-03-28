@@ -22,6 +22,7 @@ LEFT_FACING = 1
 # Character Layers
 LAYER_NAME_PLAYER = "Player"
 LAYER_NAME_VILLAGERS = "Villagers"
+LAYER_NAME_ENEMIES = "Enemies"
 
 # Object Layers
 LAYER_NAME_ORBS = "Orbs"
@@ -36,6 +37,7 @@ LAYER_NAME_STATUES = "Statues"
 LAYER_NAME_SPAWNPOINT = "Current Statue"
 LAYER_NAME_GOAL = "Goal"
 LAYER_NAME_CAVE = "Cave"
+LAYER_NAME_DEATH = "Death"
 
 # Physics things
 GRAVITY = 1
@@ -144,6 +146,15 @@ class Entity(arcade.Sprite):
                 texture = load_texture_pair(f"{main_path}/wave/{i}.png")
                 self.wave_textures.append(texture)
 
+        if "Death" in available_anims:
+            frame_num = 0
+            for path in os.listdir(f"{main_path}/death"):
+                frame_num += 1
+            
+            self.death_textures = []
+            for i in range(frame_num):
+                texture = load_texture_pair(f"{main_path}/death/{i}.png")
+            
         # Set initial texture
         self.texture = self.idle_textures[0][0]
 
@@ -177,8 +188,6 @@ class Orb(Collectible):
             self.cur_texture = 0
         self.texture = self.idle_textures[self.cur_texture // 12][0]
         return
-
-
 
 # Player Class
 
@@ -274,6 +283,7 @@ class PlayerCharacter(Entity):
                 self.cur_texture = 0
             self.texture = self.walk_textures[self.cur_texture // 4][self.facing_direction]
 
+
 # Villager NPC
 
 class DefaultVillager(Entity):
@@ -307,6 +317,38 @@ class DefaultVillager(Entity):
         else:
             self.interactable = False
         return
+
+# Default enemy class
+class Enemy(Entity):
+    """Template class for all enemies"""
+    def __init__(self, category_folder, sprite_folder):
+        # Setup parent class
+        super().__init__(category_folder, sprite_folder, ["Idle", "Walk", "Death"])
+    
+    def update_animation(self, delta_time: float = 1 / 60):
+
+        # Changing facing directions
+        if self.change_x < 0 and self.facing_direction == LEFT_FACING:
+            self.facing_direction = RIGHT_FACING
+        elif self.change_x > 0 and self.facing_direction == RIGHT_FACING:
+            self.facing_direction = LEFT_FACING
+        
+        # Walking animation
+        self.cur_texture += 1
+        if self.cur_texture > 7:
+            self.cur_texture = 0
+        self.texture = self.walk_textures[self.cur_texture // 2][self.facing_direction]
+        
+
+        
+# Wraith enemy class
+class Wraith(Enemy):
+    """Wraith enemy"""
+    def __init__(self):
+        super().__init__("Enemies", "Wraith")
+        self.change_x = 5
+
+    
 
 # Menu Screen
 class MainMenu(arcade.View):
@@ -427,6 +469,9 @@ class GameView(arcade.View):
             LAYER_NAME_MOVING_PLATFORMS: {
                 "use_spatial_hash": False,
             },
+            LAYER_NAME_DEATH: {
+                "use_spatial_hash": True,
+            },
         }
 
         # Read in Tiled map
@@ -467,6 +512,28 @@ class GameView(arcade.View):
             orb.type = orb_object.properties["type"]
             self.scene.add_sprite(LAYER_NAME_ORBS, orb)
         
+        # -- Enemies
+        enemies_layer = self.tile_map.object_lists[LAYER_NAME_ENEMIES]
+
+        for my_object in enemies_layer:
+            cartesian = self.tile_map.get_cartesian(
+                my_object.shape[0], my_object.shape[1]
+            )
+            enemy_type = my_object.properties["type"]
+            if enemy_type == "Wraith":
+                enemy = Wraith()
+            enemy.center_x = math.floor(
+                cartesian[0] * TILE_SCALING * self.tile_map.tile_width
+            )
+            enemy.center_y = math.floor(
+                (cartesian[1] + 1) * (self.tile_map.tile_height * TILE_SCALING)
+            )
+            if "boundary_left" in my_object.properties:
+                enemy.boundary_left = my_object.properties["boundary_left"]
+            if "boundary_right" in my_object.properties:
+                enemy.boundary_right = my_object.properties["boundary_right"]
+            self.scene.add_sprite(LAYER_NAME_ENEMIES, enemy)
+
         self.text_layer = self.tile_map.object_lists[LAYER_NAME_TEXT]
 
         #text_layer = self.tile_map.object_lists[LAYER_NAME_TEXT]
@@ -683,6 +750,10 @@ class GameView(arcade.View):
 
         if key == arcade.key.Q:
             self.energy += 1
+
+        if key == arcade.key.R:
+            self.player_sprite.center_x = self.tile_map.tile_width * TILE_SCALING * PLAYER_START_X
+            self.player_sprite.center_y = self.tile_map.tile_height * TILE_SCALING * PLAYER_START_Y
         self.process_keychange()
 
     def on_key_release(self, key, modifiers):
@@ -759,7 +830,8 @@ class GameView(arcade.View):
                 LAYER_NAME_PLAYER,
                 LAYER_NAME_BACKGROUND,
                 LAYER_NAME_VILLAGERS,
-                LAYER_NAME_ORBS
+                LAYER_NAME_ORBS,
+                LAYER_NAME_ENEMIES
             ],
         )
 
@@ -767,13 +839,29 @@ class GameView(arcade.View):
         self.scene.update(
             [
                 LAYER_NAME_MOVING_PLATFORMS,
-                #LAYER_NAME_VILLAGERS,
+                LAYER_NAME_ENEMIES
             ],
         )
 
         # Update villagers
         for villager in self.scene[LAYER_NAME_VILLAGERS]:
             villager.update(player_pos=(self.player_sprite.center_x, self.player_sprite.center_y), tile_map=self.tile_map)
+
+        # See if the enemy hit a boundary and needs to reverse direction.
+        for enemy in self.scene[LAYER_NAME_ENEMIES]:
+            if (
+                enemy.boundary_right
+                and enemy.right > enemy.boundary_right*TILE_SCALING*self.tile_map.tile_width
+                and enemy.change_x > 0
+            ):
+                enemy.change_x *= -1
+
+            if (
+                enemy.boundary_left
+                and enemy.left < enemy.boundary_left*TILE_SCALING*self.tile_map.tile_width
+                and enemy.change_x < 0
+            ):
+                enemy.change_x *= -1
 
         if self.shape == 0:
             interactable_villager = None
@@ -818,6 +906,12 @@ class GameView(arcade.View):
                 self.energy += 1
                 self.scene[LAYER_NAME_ORBS].remove(collision)
         
+        # Check for collisions with enemies
+        player_collision_list = arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_ENEMIES])
+        if len(player_collision_list) > 0:
+            self.player_sprite.center_x = self.tile_map.tile_width * TILE_SCALING * self.spawnpoint[0]
+            self.player_sprite.center_y = self.tile_map.tile_height * TILE_SCALING * self.spawnpoint[1]
+
         # Reveal tunnels/cave when player approaches
         for tile in self.scene[LAYER_NAME_CAVE]:
             distance_to_player = calculate_distance([self.player_sprite.center_x, self.player_sprite.center_y], [tile.center_x, tile.center_y])
@@ -828,6 +922,10 @@ class GameView(arcade.View):
         if len(arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_GOAL])) > 0:
             self.level += 1
             self.setup()
+
+        if len(arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_DEATH])) > 0:
+            self.player_sprite.center_x = self.tile_map.tile_width * TILE_SCALING * self.spawnpoint[0]
+            self.player_sprite.center_y = self.tile_map.tile_height * TILE_SCALING * self.spawnpoint[1]
 
         if self.player_sprite.center_y < 0:
             self.player_sprite.center_x = self.tile_map.tile_width * TILE_SCALING * self.spawnpoint[0]
