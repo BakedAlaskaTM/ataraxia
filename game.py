@@ -710,11 +710,6 @@ class GameView(arcade.View):
                 self.fly_speed = 0
                 self.time_since_ground = 0
             self.time_since_ground += delta_time
-<<<<<<< HEAD
-                
-=======
-
->>>>>>> 89f427c1ec53e7b674962ec5e846de3bb9f58611
 
         # Update animations for the player
         if self.physics_engine.can_jump():
@@ -791,13 +786,6 @@ class GameView(arcade.View):
             if collision.type == "Energy":
                 self.energy += 1
                 self.scene[LAYER_NAME_ORBS].remove(collision)
-<<<<<<< HEAD
-        
-        
-=======
-
-
->>>>>>> 89f427c1ec53e7b674962ec5e846de3bb9f58611
 
         if self.player_sprite.center_y < 0:
             self.player_sprite.center_x = self.tile_map.tile_width * TILE_SCALING * self.spawnpoint[0]
