@@ -11,34 +11,44 @@
     "fileStates": {
         "0.tmx": {
             "expandedObjectLayers": [
+                10,
                 11,
-                12,
-                10
+                12
             ],
-            "scale": 0.5,
-            "selectedLayer": 9,
+            "scale": 1,
+            "selectedLayer": 7,
             "viewCenter": {
-                "x": -486,
-                "y": -4
+                "x": 506,
+                "y": 80
             }
         },
         "1.1.tmx": {
-            "scale": 2,
-            "selectedLayer": 0,
+            "expandedObjectLayers": [
+                14,
+                6,
+                5
+            ],
+            "scale": 4,
+            "selectedLayer": 2,
             "viewCenter": {
-                "x": 439.5,
-                "y": 1355.5
+                "x": 4294.5,
+                "y": 1525.75
             }
         },
         "1.tmx": {
-            "expandedObjectLayers": [
-                7
-            ],
-            "scale": 2,
-            "selectedLayer": 2,
+            "scale": 0.4769,
+            "selectedLayer": 8,
             "viewCenter": {
-                "x": 369.5,
-                "y": 598.5
+                "x": 895.3659048018453,
+                "y": 385.82512057035024
+            }
+        },
+        "2.1.tmx": {
+            "scale": 0.75,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": 90.66666666666663,
+                "y": 1302.6666666666665
             }
         },
         "C:/Users/devin/AppData/Local/Programs/Python/Python311/Lib/site-packages/arcade/resources/tiled_maps/map_with_ladders.json": {
@@ -52,10 +62,13 @@
                 "y": 1088.908939014202
             }
         },
+        "NPCs.tsx": {
+            "scaleInDock": 1
+        },
         "Testing Tiles.tsx": {
             "dynamicWrapping": true,
-            "scaleInDock": 11,
-            "scaleInEditor": 1
+            "scaleInDock": 0.03125,
+            "scaleInEditor": 0.75
         },
         "testmap.tmj": {
             "expandedObjectLayers": [
@@ -80,15 +93,16 @@
     "map.width": 400,
     "openFiles": [
         "0.tmx",
-        "Testing Tiles.tsx"
+        "Testing Tiles.tsx",
+        "1.tmx"
     ],
     "project": "AtaraxiaMaps.tiled-project",
     "property.type": "string",
     "recentFiles": [
+        "0.tmx",
         "1.tmx",
-        "testmap.tmj",
         "Testing Tiles.tsx",
-        "0.tmx"
+        "testmap.tmj"
     ],
     "tileset.lastUsedFormat": "tsx",
     "tileset.type": 1
