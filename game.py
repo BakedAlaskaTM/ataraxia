@@ -5,8 +5,8 @@ import arcade, os, random, math
 MAIN_PATH = os.path.dirname(os.path.abspath(__file__))
 
 # Window Settings
-SCREEN_WIDTH = 1920
-SCREEN_HEIGHT = 1080
+SCREEN_WIDTH = 1280
+SCREEN_HEIGHT = 720
 SCREEN_TITLE = "Ataraxia V1"
 
 # Sprite Scaling
@@ -30,6 +30,7 @@ LAYER_NAME_TEXT = "Text"
 LAYER_NAME_COLLECTIBLES = "Collectibles"
 LAYER_NAME_WARP_DOORS = "Warp Doors"
 LAYER_NAME_LOCKED_DOORS = "Locked Doors"
+LAYER_NAME_KNIFE = "Knife"
 
 # Tile Layers
 LAYER_NAME_PLATFORMS = "Platforms"
@@ -55,8 +56,8 @@ PLAYER_RUN_SPEED = 15
 PLAYER_JUMP_SPEED = 20
 
 # Player spawnpoints
-PLAYER_START_X = 148
-PLAYER_START_Y = 24
+PLAYER_START_X = 3
+PLAYER_START_Y = 18
 
 # Dictionary References
 QUEST_REF = {
