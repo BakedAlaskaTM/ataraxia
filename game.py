@@ -311,6 +311,26 @@ class LockedDoor(Entity):
         else:
             self.texture = self.open_textures[0][0]
 
+# Knife class
+class Knife(Entity):
+    """Display knife when swung"""
+
+    def __init__(self):
+        # Inherit from parent class (Entity)
+        super().__init__("InanimateObjects", "Knife", ["Idle"])
+        self.cur_texture = 0
+        self.swing_finished = False
+    
+    def update_animation(self, delta_time: float = 1 / 60):
+        if not self.swing_finished:
+            self.texture = self.idle_textures[self.cur_texture // 3][self.facing_direction]
+            self.cur_texture += 1
+        if self.cur_texture > 5:
+            self.swing_finished = True
+            
+        
+        
+
 # Player Class
 
 class PlayerCharacter(Entity):
@@ -1163,6 +1183,9 @@ class GameView(arcade.View):
             self.player_sprite.center_y = self.tile_map.tile_height * TILE_SCALING * PLAYER_START_Y
         self.process_keychange()
 
+        if key == arcade.key.Z and self.inventory_other["002"]["number"] > 0:
+            self.swing_knife = True
+
     def on_key_release(self, key, modifiers):
         """Called when the user releases a key."""
 
@@ -1438,6 +1461,7 @@ class GameView(arcade.View):
                     quest_req_cards = True
                     quest_id_cards = id
                 if info["quest_item"] == "Document":
+                    print("Yes")
                     quest_req_documents = True
                     quest_id_documents = id
             
@@ -1552,7 +1576,7 @@ class GameView(arcade.View):
             if self.finished_quest["dialogue_time"] > 0:
                 self.finished_quest["dialogue_time"] -= delta_time
             else:
-                self.finished_quest = 0
+                self.finished_quest["dialogue_time"] = 0
 
             # Once the timer for the quest end dialogue goes to 0, 
             # delete the finished quest.
