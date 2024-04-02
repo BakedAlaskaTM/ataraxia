@@ -27,6 +27,9 @@ LAYER_NAME_ENEMIES = "Enemies"
 # Object Layers
 LAYER_NAME_ORBS = "Orbs"
 LAYER_NAME_TEXT = "Text"
+LAYER_NAME_COLLECTIBLES = "Collectibles"
+LAYER_NAME_WARP_DOORS = "Warp Doors"
+LAYER_NAME_LOCKED_DOORS = "Locked Doors"
 
 # Tile Layers
 LAYER_NAME_PLATFORMS = "Platforms"
@@ -38,6 +41,12 @@ LAYER_NAME_SPAWNPOINT = "Current Statue"
 LAYER_NAME_GOAL = "Goal"
 LAYER_NAME_CAVE = "Cave"
 LAYER_NAME_DEATH = "Death"
+LAYER_NAME_DOOR_BARRIERS_OPEN = "Door Barrier Open"
+LAYER_NAME_DOOR_BARRIERS_CLOSED = "Door Barrier Closed"
+
+# GUI Layers
+LAYER_NAME_ENERGY = "Energy"
+LAYER_NAME_HEALTH = "Health"
 
 # Physics things
 GRAVITY = 1
@@ -46,8 +55,40 @@ PLAYER_RUN_SPEED = 15
 PLAYER_JUMP_SPEED = 20
 
 # Player spawnpoints
-PLAYER_START_X = 3
-PLAYER_START_Y = 18
+PLAYER_START_X = 148
+PLAYER_START_Y = 24
+
+# Dictionary References
+QUEST_REF = {
+    "000": {
+        "dialogue": "I'm getting too old to climb trees, can you please pick 3 apples for me?",
+        "item": "Apple",
+        "number": 3,
+        "reward_item": "Energy",
+        "reward_num": 1 
+    },
+    "001": {
+        "dialogue": "Heya, I dropped my card on the other side of that wraith over there, could you grab it for me?",
+        "item": "Card",
+        "number": 1,
+        "reward_item": "Energy",
+        "reward_num": 1 
+    },
+    "002": {
+        "dialogue": "I've been looking for a legal document in my basement, can you find it for me? I'll give you this knife if you find it.",
+        "item": "Document",
+        "number": 1,
+        "reward_item": "Knife",
+        "reward_num": 1
+    },
+    "003": {
+        "dialogue": "Please kill the wraith over there, we need to be able to access the church. I can grant you access if you kill it.",
+        "item": "Ectoplasm",
+        "number": 1,
+        "reward_item": "Church Key",
+        "reward_num": 1
+    },
+}
 
 # Loading mirrored sprites
 def load_texture_pair(filename):
@@ -118,7 +159,6 @@ class Entity(arcade.Sprite):
             for path in os.listdir(f"{main_path}/walk"):
                 frame_num += 1
 
-            print(frame_num)
             self.walk_textures = []
             for i in range(frame_num):
                 texture = load_texture_pair(f"{main_path}/walk/{i}.png")
@@ -154,6 +194,27 @@ class Entity(arcade.Sprite):
             self.death_textures = []
             for i in range(frame_num):
                 texture = load_texture_pair(f"{main_path}/death/{i}.png")
+                self.death_textures.append(texture)
+        
+        if "Open" in available_anims:
+            frame_num = 0
+            for path in os.listdir(f"{main_path}/open"):
+                frame_num += 1
+            
+            self.open_textures = []
+            for i in range(frame_num):
+                texture = load_texture_pair(f"{main_path}/open/{i}.png")
+                self.open_textures.append(texture)
+        
+        if "Closed" in available_anims:
+            frame_num = 0
+            for path in os.listdir(f"{main_path}/closed"):
+                frame_num += 1
+            
+            self.closed_textures = []
+            for i in range(frame_num):
+                texture = load_texture_pair(f"{main_path}/closed/{i}.png")
+                self.closed_textures.append(texture)
             
         # Set initial texture
         self.texture = self.idle_textures[0][0]
@@ -189,6 +250,66 @@ class Orb(Collectible):
         self.texture = self.idle_textures[self.cur_texture // 12][0]
         return
 
+# Apple class
+class Apple(Collectible):
+    """Apple collectible sprite"""
+
+    def __init__(self):
+        # Inherit from parent class (Collectible)    
+        super().__init__("Apple")
+        self.type = None
+        self.texture = self.idle_textures[0][0]
+
+# Lost card class
+class Card(Collectible):
+    """Card collectible sprite"""
+
+    def __init__(self):
+        # Inherit from parent class (Collectible)
+        super().__init__("Card")
+        self.type = None
+        self.texture = self.idle_textures[0][0]
+
+# Lost document class
+class Document(Collectible):
+    """Document collectible sprite"""
+
+    def __init__(self):
+        super().__init__("Document")
+        self.type = None
+        self.texture = self.idle_textures[0][0]
+    
+# Key class
+class Key(Collectible):
+    """Collectible key sprite"""
+
+    def __init__(self):
+        # Inherit from parent class (Collectible)
+        super().__init__("Key")
+        self.type = None
+        self.id = None
+        self.texture = self.idle_textures[0][0]
+
+
+# Class for changing locked door textures
+class LockedDoor(Entity):
+    """Display entity for locked doors"""
+
+    def __init__(self):
+        # Inherit from parent class (Entity)
+        
+        super().__init__("InanimateObjects", "LockedDoor", ["Idle", "Open", "Closed"])
+        self.id = None        
+        self.open = False
+        self.texture = self.closed_textures[0][0]
+        
+
+    def update_animation(self, delta_time: float = 1 / 60):
+        if self.open == False:
+            self.texture = self.closed_textures[0][0]
+        else:
+            self.texture = self.open_textures[0][0]
+
 # Player Class
 
 class PlayerCharacter(Entity):
@@ -197,9 +318,9 @@ class PlayerCharacter(Entity):
     def __init__(self, shape):
 
         if shape == 0:
-            available_anims = ["Idle", "Walk", "Jump", "Climb"]
+            available_anims = ["Idle", "Walk", "Jump", "Climb", "Death"]
         else:
-            available_anims = ["Idle", "Walk", "Jump"]
+            available_anims = ["Idle", "Walk", "Jump", "Death"]
         # Inherit from parent class (Entity)
         super().__init__("Friendly", f"Player{shape+1}", available_anims)
 
@@ -208,9 +329,8 @@ class PlayerCharacter(Entity):
         self.jumping = False
         self.climbing = False
         self.is_on_ladder = False
-        if shape == 1:
-            self.set_hit_box([[-7, -7], [7, -7], [7, -1], [-7, -1]])
-            print(self.get_hit_box())
+        self.is_dead = False
+        self.dying = False
 
     def update_animation(self, delta_time: float = 1 / 60):
 
@@ -221,8 +341,33 @@ class PlayerCharacter(Entity):
             self.facing_direction = RIGHT_FACING
 
         # Hierarchy of animations:
-        # Climbing, Jumping, Idle, Walking
+        # Death, Climbing, Jumping, Idle, Walking
 
+        # Death animation
+        if self.is_dead:
+            if not self.dying:
+                self.cur_texture = 0
+                self.dying = True
+            
+            if self.shape == 0:
+                if self.cur_texture > 35:
+                    self.cur_texture = 0
+                    self.is_dead = False
+                  
+            elif self.shape == 1:
+                if self.cur_texture > 23:
+                    self.cur_texture = 0
+                    self.is_dead = False
+            elif self.shape == 2:
+                if self.cur_texture > 23:
+                    self.cur_texture = 0
+                    self.is_dead = False
+            self.texture = self.death_textures[self.cur_texture // 6][self.facing_direction]
+            self.cur_texture += 1 
+            return
+
+                 
+        
         # Climbing animation
         if self.shape == 0:
             if self.is_on_ladder:
@@ -234,7 +379,6 @@ class PlayerCharacter(Entity):
                 if self.cur_texture > 31:
                     self.cur_texture = 0
             if self.climbing:
-                print(len(self.climbing_textures))
                 self.texture = self.climbing_textures[self.cur_texture // 4][self.facing_direction]
                 return
 
@@ -288,18 +432,17 @@ class PlayerCharacter(Entity):
 
 class DefaultVillager(Entity):
     """Basic Villager Sprite"""
-    def __init__(self, villager_id):
+    def __init__(self, villager_texture_id):
 
         # Inherit from parent class (Entity)
-        super().__init__("Friendly", f"Villager{villager_id}", ["Idle", "Wave"])
+        super().__init__("Friendly", f"Villager{villager_texture_id}", ["Idle", "Wave"])
 
         # Track states
-        self.id = villager_id
+        self.id = None
         self.wave = False
         self.interactable = False
 
     def update_animation(self, delta_time: float = 1 / 60):
-        #print(self.wave_textures)
         # Idle animation
 
         if self.wave == False:
@@ -348,7 +491,6 @@ class Wraith(Enemy):
         super().__init__("Enemies", "Wraith")
         self.change_x = 5
 
-    
 
 # Menu Screen
 class MainMenu(arcade.View):
@@ -403,11 +545,33 @@ class GameView(arcade.View):
         self.interact = False
 
         # Player stats (health, energy, etc)
-        self.health = 100
+        self.health = 3
         self.energy = 0
         self.shape = 0
         self.fly_speed = 0
         self.thrust = 10
+        self.inventory_quest = {
+            "000": {"name": "Apples", "number": 0},
+            "001": {"name": "Cards", "number": 0},
+            "002": {"name": "Documents", "number": 0},
+            "003": {"name": "Ectoplasm", "number": 0}
+        }
+
+        self.inventory_other = {
+            "002": {"name": "Knife", "type": "Weapon", "number": 0},
+            "003": {"name": "Church Key", "type": "Key", "number": 0}
+        }
+        self.keys_obtained = []
+
+        # Quest variables
+        self.quests = {}
+        self.in_quest = False
+        self.not_complete_time = 0
+        self.finished_quest = None
+        self.latest_quest = None
+        self.check_quest = None
+        self.completed_quests = []
+        self.quest_ended = False
 
         # Sensing variables
         self.can_interact = False
@@ -416,6 +580,15 @@ class GameView(arcade.View):
         # Control variables
         self.delta_time = 0
         self.time_since_ground = 0
+        self.cooldown = 0
+        self.map_has_villagers = None
+        self.map_has_orbs = None
+        self.map_has_enemies = None
+        self.available_layers = []
+        self.missing_key_text = 0
+
+        # Warp variables
+        self.doors = {}
 
         # Variables to change player spawnpoint
         self.spawnpoint = (PLAYER_START_X, PLAYER_START_Y)
@@ -454,6 +627,13 @@ class GameView(arcade.View):
         # Map name
         map_name = f"{MAIN_PATH}/maps/{self.level}.tmx"
 
+        # Update control variables
+        self.map_has_villagers = False
+        self.map_has_orbs = False
+        self.map_has_enemies = False
+        self.map_has_locked_doors = False
+        self.available_layers = []
+
 
         # Layer specific options for Tilemap
         layer_options = {
@@ -472,6 +652,21 @@ class GameView(arcade.View):
             LAYER_NAME_DEATH: {
                 "use_spatial_hash": True,
             },
+            LAYER_NAME_DOOR_BARRIERS_OPEN: {
+                "use_spatial_hash": False
+            },
+            LAYER_NAME_DOOR_BARRIERS_CLOSED: {
+                "use_spatial_hash": True
+            },
+            LAYER_NAME_COLLECTIBLES: {
+                "use_spatial_hash": True
+            },
+            LAYER_NAME_WARP_DOORS: {
+                "use_spatial_hash": True
+            },
+            LAYER_NAME_LOCKED_DOORS: {
+                "use_spatial_hash": True
+            },
         }
 
         # Read in Tiled map
@@ -480,97 +675,219 @@ class GameView(arcade.View):
         # Initialise new scene with the tilemap
         self.scene = arcade.Scene.from_tilemap(self.tile_map)
 
+        # Make a scene for the GUI
+        self.gui_scene = arcade.Scene()
+
+        # Add in NPCs
         # Add in villagers
-        villagers_layer = self.tile_map.object_lists[LAYER_NAME_VILLAGERS]
-        for villager_object in villagers_layer:
-            cartesian = self.tile_map.get_cartesian(
-                villager_object.shape[0], villager_object.shape[1]
-            )
-            villager = DefaultVillager(int(villager_object.properties["id"][2])+1)
-            villager.center_x = math.floor(
-                (cartesian[0]+0.5) * TILE_SCALING * self.tile_map.tile_width
-            )
-            villager.center_y = math.floor(
-                (cartesian[1]+0.5) * (self.tile_map.tile_height * TILE_SCALING)-TILE_SCALING
-            )
+        try:
+            villagers_layer = self.tile_map.object_lists[LAYER_NAME_VILLAGERS]
+            for villager_object in villagers_layer:
+                cartesian = self.tile_map.get_cartesian(
+                    villager_object.shape[0], villager_object.shape[1]
+                )
+                villager = DefaultVillager(int(villager_object.properties["id"][2])+1)
+                villager.id = villager_object.properties["id"]
+                villager.center_x = math.floor(
+                    (cartesian[0]+0.5) * TILE_SCALING * self.tile_map.tile_width
+                )
+                villager.center_y = math.floor(
+                    (cartesian[1]+0.5) * (self.tile_map.tile_height * TILE_SCALING)-TILE_SCALING
+                )
+                self.map_has_villagers = True
+                self.scene.add_sprite(LAYER_NAME_VILLAGERS, villager)
+        except:
+            self.map_has_villagers = False
+            
 
-            self.scene.add_sprite(LAYER_NAME_VILLAGERS, villager)
+        # Add in Enemies
+        try:
+            enemies_layer = self.tile_map.object_lists[LAYER_NAME_ENEMIES]
 
+            for enemy_object in enemies_layer:
+                cartesian = self.tile_map.get_cartesian(
+                    enemy_object.shape[0], enemy_object.shape[1]
+                )
+                enemy_type = enemy_object.properties["type"]
+                if enemy_type == "Wraith":
+                    enemy = Wraith()
+                enemy.center_x = math.floor(
+                    (cartesian[0]) * TILE_SCALING * self.tile_map.tile_width
+                )
+                enemy.center_y = math.floor(
+                    (cartesian[1]+0.5) * (self.tile_map.tile_height * TILE_SCALING)
+                )
+                if "boundary_left" in enemy_object.properties:
+                    enemy.boundary_left = enemy_object.properties["boundary_left"]
+                if "boundary_right" in enemy_object.properties:
+                    enemy.boundary_right = enemy_object.properties["boundary_right"]
+                self.map_has_enemies = True
+                self.scene.add_sprite(LAYER_NAME_ENEMIES, enemy)
+        except:
+            self.map_has_enemies = False
+            
+
+        # Add inanimate objects
         # Add in energy orbs
-        orbs_layer = self.tile_map.object_lists[LAYER_NAME_ORBS]
-        for orb_object in orbs_layer:
-            cartesian = self.tile_map.get_cartesian(
-                orb_object.shape[0], orb_object.shape[1]
-            )
-            orb = Orb()
-            orb.center_x = math.floor(
-                (cartesian[0]+0.5) * TILE_SCALING * self.tile_map.tile_width
-            )
-            orb.center_y = math.floor(
-                (cartesian[1]+0.5) * (self.tile_map.tile_height * TILE_SCALING)-TILE_SCALING
-            )
-            orb.type = orb_object.properties["type"]
-            self.scene.add_sprite(LAYER_NAME_ORBS, orb)
+        try:
+            orbs_layer = self.tile_map.object_lists[LAYER_NAME_ORBS]
+            for orb_object in orbs_layer:
+                cartesian = self.tile_map.get_cartesian(
+                    orb_object.shape[0], orb_object.shape[1]
+                )
+                orb = Orb()
+                orb.center_x = math.floor(
+                    (cartesian[0]+0.5) * TILE_SCALING * self.tile_map.tile_width
+                )
+                orb.center_y = math.floor(
+                    (cartesian[1]+0.5) * (self.tile_map.tile_height * TILE_SCALING)-TILE_SCALING
+                )
+                orb.type = orb_object.properties["type"]
+                self.map_has_orbs = True
+                self.scene.add_sprite(LAYER_NAME_ORBS, orb)
+        except:
+            self.map_has_orbs = False
+
+        # Add in quest collectibles
+        try:
+            collectible_layer = self.tile_map.object_lists[LAYER_NAME_COLLECTIBLES]
+            for collectible_object in collectible_layer:
+                cartesian = self.tile_map.get_cartesian(
+                    collectible_object.shape[0], collectible_object.shape[1]
+                )
+                collectible_type = collectible_object.properties["type"]
+                if collectible_type == "Apple":
+                    collectible = Apple()
+                if collectible_type == "Card":
+                    collectible = Card()
+                if collectible_type == "Document":
+                    collectible = Document()
+                if collectible_type == "Key":
+                    collectible = Key()
+                    collectible.id = collectible_object.properties["unlocks"]
+                
+                collectible.center_x = math.floor(
+                    (cartesian[0]+0.5) * TILE_SCALING * self.tile_map.tile_width
+                )
+                collectible.center_y = math.floor(
+                    (cartesian[1]+0.5) * (self.tile_map.tile_height * TILE_SCALING)-TILE_SCALING
+                )
+                collectible.type = collectible_object.properties["type"]
+                self.scene.add_sprite(LAYER_NAME_COLLECTIBLES, collectible)
+        except:
+            pass
         
-        # -- Enemies
-        enemies_layer = self.tile_map.object_lists[LAYER_NAME_ENEMIES]
+        # Add in the guiding text in the air
+        try:
+            self.text_layer = self.tile_map.object_lists[LAYER_NAME_TEXT]
+        except:
+            pass
 
-        for my_object in enemies_layer:
+        # Add all warp doors into the a list of door information
+        door_layer = self.tile_map.object_lists[LAYER_NAME_WARP_DOORS]
+        count = 0
+        for door in door_layer:
             cartesian = self.tile_map.get_cartesian(
-                my_object.shape[0], my_object.shape[1]
+                door.shape[0], door.shape[1]
             )
-            enemy_type = my_object.properties["type"]
-            if enemy_type == "Wraith":
-                enemy = Wraith()
-            enemy.center_x = math.floor(
-                cartesian[0] * TILE_SCALING * self.tile_map.tile_width
+            warp = door.properties["warp"]
+            dest = [door.properties["dest_x"], door.properties["dest_y"]]
+            key = door.properties["key_req"]
+            self.doors[count] = {
+                "warp": warp,
+                "dest": dest,
+                "key_req": key,
+                "pos": [cartesian[0]*TILE_SCALING*self.tile_map.tile_width, cartesian[1]*TILE_SCALING*self.tile_map.tile_width]
+            }
+            count += 1
+
+        # Add in the locked doors
+        try:
+            locked_door_layer = self.tile_map.object_lists[LAYER_NAME_LOCKED_DOORS]
+            for locked_door_object in locked_door_layer:
+                cartesian = self.tile_map.get_cartesian(
+                    locked_door_object.shape[0], locked_door_object.shape[1]
+                )
+                locked_door = LockedDoor()
+                locked_door.center_x = math.floor(
+                    (cartesian[0]+0.5) * TILE_SCALING * self.tile_map.tile_width
+                )
+                locked_door.center_y = math.floor(
+                    (cartesian[1]+0.5) * self.tile_map.tile_height * TILE_SCALING
+                )
+                locked_door.id = locked_door_object.properties["id"]
+                self.map_has_locked_doors = True
+                self.scene.add_sprite(LAYER_NAME_LOCKED_DOORS, locked_door)
+        except:
+            self.map_has_locked_doors = False
+
+        # Setup GUI Layers
+
+        # Setup energy bar
+        self.gui_scene.add_sprite(
+            LAYER_NAME_ENERGY,
+            arcade.Sprite(
+                texture=arcade.load_texture(f"{MAIN_PATH}/assets/GUI/Energy/0.png"), 
+                scale=TILE_SCALING,
+                center_x=SCREEN_WIDTH-TILE_SCALING*32,
+                center_y=SCREEN_HEIGHT-TILE_SCALING*48,
+                )
             )
-            enemy.center_y = math.floor(
-                (cartesian[1] + 1) * (self.tile_map.tile_height * TILE_SCALING)
+
+        # Setup health bar
+        self.gui_scene.add_sprite(
+            LAYER_NAME_HEALTH,
+            arcade.Sprite(
+                texture=arcade.load_texture(f"{MAIN_PATH}/assets/GUI/Health/3.png"),
+                scale=TILE_SCALING,
+                center_x=SCREEN_WIDTH-TILE_SCALING*32,
+                center_y=SCREEN_HEIGHT-TILE_SCALING*27,
             )
-            if "boundary_left" in my_object.properties:
-                enemy.boundary_left = my_object.properties["boundary_left"]
-            if "boundary_right" in my_object.properties:
-                enemy.boundary_right = my_object.properties["boundary_right"]
-            self.scene.add_sprite(LAYER_NAME_ENEMIES, enemy)
-
-        self.text_layer = self.tile_map.object_lists[LAYER_NAME_TEXT]
-
-        #text_layer = self.tile_map.object_lists[LAYER_NAME_TEXT]
-        #for text_object in text_layer:
-        #    cartesian = self.tile_map.get_cartesian(
-        #        text_object.shape[0], text_object.shape[1]
-        #    )
-
+        )
 
         # Setup player at specific coordinates
         self.player_sprite = PlayerCharacter(self.shape)
         self.player_sprite.center_x = (
-            self.tile_map.tile_width * TILE_SCALING * PLAYER_START_X
+            self.tile_map.tile_width * TILE_SCALING * self.spawnpoint[0]
         )
         self.player_sprite.center_y = (
-            self.tile_map.tile_height * TILE_SCALING * PLAYER_START_Y
+            self.tile_map.tile_height * TILE_SCALING * self.spawnpoint[1]
         )
 
         self.scene.add_sprite(LAYER_NAME_PLAYER, self.player_sprite)
 
-        # Add in enemies
-
-
-        arcade.set_background_color((99, 245, 255))
-
-        # Set background colour
-        #if self.tile_map.background_color:
-        #    arcade.set_background_color(self.tile_map.background_color)
+        if str(self.level) == "1.1":
+            arcade.set_background_color((99, 245, 255))
+        else:
+            arcade.set_background_color((0, 0, 0))
 
         # Create the physics engine
-        self.physics_engine = arcade.PhysicsEnginePlatformer(
-            self.player_sprite,
-            platforms=self.scene[LAYER_NAME_MOVING_PLATFORMS],
-            gravity_constant=GRAVITY,
-            ladders=self.scene[LAYER_NAME_LADDERS],
-            walls=self.scene[LAYER_NAME_PLATFORMS],
-        )
+        try:
+            self.physics_engine = arcade.PhysicsEnginePlatformer(
+                self.player_sprite,
+                platforms=self.scene[LAYER_NAME_MOVING_PLATFORMS],
+                gravity_constant=GRAVITY,
+                ladders=self.scene[LAYER_NAME_LADDERS],
+                walls=[self.scene[LAYER_NAME_PLATFORMS], self.scene[LAYER_NAME_DOOR_BARRIERS_CLOSED]],
+            )
+        except:
+            self.physics_engine = arcade.PhysicsEnginePlatformer(
+                self.player_sprite,
+                platforms=self.scene[LAYER_NAME_MOVING_PLATFORMS],
+                gravity_constant=GRAVITY,
+                ladders=self.scene[LAYER_NAME_LADDERS],
+                walls=self.scene[LAYER_NAME_PLATFORMS],
+            )
+
+        if self.map_has_villagers:
+            self.available_layers.append(LAYER_NAME_VILLAGERS)
+        if self.map_has_orbs:
+            self.available_layers.append(LAYER_NAME_ORBS)
+        if self.map_has_enemies:
+            self.available_layers.append(LAYER_NAME_ENEMIES)
+        if self.map_has_locked_doors:
+            self.available_layers.append(LAYER_NAME_LOCKED_DOORS)
+        
 
     def on_show_view(self):
         self.setup()
@@ -588,20 +905,76 @@ class GameView(arcade.View):
         # Draw the scene
         self.scene.draw(pixelated=True)
 
-        for text in self.text_layer:
-            cartesian = self.tile_map.get_cartesian(
-                text.shape[0], text.shape[1]
-            )
-            if text.properties["colour"] == "1":
-                colour = (255, 255, 255)
-            else:
-                colour = (0, 0, 0)
+        # Actually draw the floating text
+        try:
+            for text in self.text_layer:
+                cartesian = self.tile_map.get_cartesian(
+                    text.shape[0], text.shape[1]
+                )
+                if text.properties["colour"] == "1":
+                    colour = (255, 255, 255)
+                else:
+                    colour = (0, 0, 0)
+                arcade.draw_text(
+                    text.properties["text"],
+                    cartesian[0]*TILE_SCALING*self.tile_map.tile_width,
+                    cartesian[1]*TILE_SCALING*self.tile_map.tile_height,
+                    colour,
+                    14,
+                )
+        except:
+            pass
+
+        # Start quest dialogue
+        if self.in_quest:
+            try:
+                if self.latest_quest["dialogue_time"] > 0:
+                    arcade.draw_text(
+                        self.start_dialogue,
+                        self.latest_quest["villager_pos"][0],
+                        self.latest_quest["villager_pos"][1]+1.5*TILE_SCALING*self.tile_map.tile_width,
+                        (0, 0, 0),
+                        15,
+                        anchor_x="center",
+                        anchor_y="center",
+                    )
+            except KeyError:
+                pass
+        
+        # If quest not complete then draw this
+        if self.not_complete_time > 0:
             arcade.draw_text(
-                text.properties["text"],
-                cartesian[0]*TILE_SCALING*self.tile_map.tile_width,
-                cartesian[1]*TILE_SCALING*self.tile_map.tile_height,
-                colour,
-                14,
+                "Bruh you're not done yet",
+                self.check_quest["villager_pos"][0],
+                self.check_quest["villager_pos"][1]+1.5*TILE_SCALING*self.tile_map.tile_width,
+                (0, 0, 0),
+                15,
+                anchor_x="center",
+                anchor_y="center",
+            )
+
+        # If quest complete draw this
+        if self.finished_quest != None:
+            if self.finished_quest["dialogue_time"] > 0:
+                arcade.draw_text(
+                    "Thanks, here is your reward",
+                    self.finished_quest["villager_pos"][0],
+                    self.finished_quest["villager_pos"][1]+1.5*TILE_SCALING*self.tile_map.tile_width,
+                    (0, 0, 0),
+                    15,
+                    anchor_x="center",
+                    anchor_y="center",
+                )
+
+        # If key missing draw this
+        if self.missing_key_text > 0:
+            arcade.draw_text(
+                "Missing key",
+                self.player_sprite.center_x,
+                self.player_sprite.center_y+1.5*TILE_SCALING*self.tile_map.tile_height,
+                (0, 0, 0),
+                15,
+                anchor_x = "center"
             )
 
         # Activate the GUI camera to draw GUI elements
@@ -610,14 +983,7 @@ class GameView(arcade.View):
         # Draw GUI content
 
         # Display current energy
-        current_energy = f"Energy: {self.energy}/3"
-        arcade.draw_text(
-            current_energy,
-            10,
-            50,
-            (255, 255, 255),
-            18,
-        )
+        self.gui_scene.draw(pixelated=True)
 
         # If interact is possible then draw this text
         if self.can_interact:
@@ -627,8 +993,22 @@ class GameView(arcade.View):
                 50,
                 (255, 255, 255),
                 18,
-
             )
+        
+        # If in quest then draw the current quest progress
+        if self.in_quest:
+            count = 0
+            for id, info in self.quests.items():
+                arcade.draw_text(
+                    f"{info['quest_item']}: {self.inventory_quest[id]['number']}/{info['num_needed']}",
+                    SCREEN_WIDTH-48*TILE_SCALING,
+                    SCREEN_HEIGHT-(60+count*9)*TILE_SCALING,
+                    (0, 0, 0),
+                    20,
+                )
+                count += 1
+        
+        
         
         
     def process_keychange(self):
@@ -708,13 +1088,22 @@ class GameView(arcade.View):
                 self.player_sprite.center_y = player_pos[1]
 
                 self.scene.add_sprite(LAYER_NAME_PLAYER, self.player_sprite)
-                self.physics_engine = arcade.PhysicsEnginePlatformer(
-                    self.player_sprite,
-                    platforms=self.scene[LAYER_NAME_MOVING_PLATFORMS],
-                    gravity_constant=GRAVITY,
-                    ladders=self.scene[LAYER_NAME_LADDERS],
-                    walls=self.scene[LAYER_NAME_PLATFORMS],
-                )
+                try:
+                    self.physics_engine = arcade.PhysicsEnginePlatformer(
+                        self.player_sprite,
+                        platforms=self.scene[LAYER_NAME_MOVING_PLATFORMS],
+                        gravity_constant=GRAVITY,
+                        ladders=self.scene[LAYER_NAME_LADDERS],
+                        walls=[self.scene[LAYER_NAME_PLATFORMS], self.scene[LAYER_NAME_DOOR_BARRIERS_CLOSED]],
+                    )
+                except:
+                    self.physics_engine = arcade.PhysicsEnginePlatformer(
+                        self.player_sprite,
+                        platforms=self.scene[LAYER_NAME_MOVING_PLATFORMS],
+                        gravity_constant=GRAVITY,
+                        ladders=self.scene[LAYER_NAME_LADDERS],
+                        walls=self.scene[LAYER_NAME_PLATFORMS],
+                    )
             if key == arcade.key.KEY_2 and self.shape != 1:
                 player_pos = (self.player_sprite.center_x, self.player_sprite.center_y)
                 self.shape = 1
@@ -725,12 +1114,20 @@ class GameView(arcade.View):
                 self.player_sprite.center_y = player_pos[1]
 
                 self.scene.add_sprite(LAYER_NAME_PLAYER, self.player_sprite)
-                self.physics_engine = arcade.PhysicsEnginePlatformer(
-                    self.player_sprite,
-                    platforms=self.scene[LAYER_NAME_MOVING_PLATFORMS],
-                    gravity_constant=GRAVITY,
-                    walls=self.scene[LAYER_NAME_PLATFORMS],
-                )
+                try:
+                    self.physics_engine = arcade.PhysicsEnginePlatformer(
+                        self.player_sprite,
+                        platforms=self.scene[LAYER_NAME_MOVING_PLATFORMS],
+                        gravity_constant=GRAVITY,
+                        walls=[self.scene[LAYER_NAME_PLATFORMS], self.scene[LAYER_NAME_DOOR_BARRIERS_CLOSED]],
+                    )
+                except:
+                    self.physics_engine = arcade.PhysicsEnginePlatformer(
+                        self.player_sprite,
+                        platforms=self.scene[LAYER_NAME_MOVING_PLATFORMS],
+                        gravity_constant=GRAVITY,
+                        walls=self.scene[LAYER_NAME_PLATFORMS],
+                    )
             if key == arcade.key.KEY_3 and self.shape != 2:
                 player_pos = (self.player_sprite.center_x, self.player_sprite.center_y)
                 self.shape = 2
@@ -741,15 +1138,24 @@ class GameView(arcade.View):
                 self.player_sprite.center_y = player_pos[1]
 
                 self.scene.add_sprite(LAYER_NAME_PLAYER, self.player_sprite)
-                self.physics_engine = arcade.PhysicsEnginePlatformer(
-                    self.player_sprite,
-                    platforms=self.scene[LAYER_NAME_MOVING_PLATFORMS],
-                    gravity_constant=GRAVITY,
-                    walls=self.scene[LAYER_NAME_PLATFORMS],
-                )
+                try:
+                    self.physics_engine = arcade.PhysicsEnginePlatformer(
+                        self.player_sprite,
+                        platforms=self.scene[LAYER_NAME_MOVING_PLATFORMS],
+                        gravity_constant=GRAVITY,
+                        walls=[self.scene[LAYER_NAME_PLATFORMS], self.scene[LAYER_NAME_DOOR_BARRIERS_CLOSED]],
+                    )
+                except:
+                    self.physics_engine = arcade.PhysicsEnginePlatformer(
+                        self.player_sprite,
+                        platforms=self.scene[LAYER_NAME_MOVING_PLATFORMS],
+                        gravity_constant=GRAVITY,
+                        walls=self.scene[LAYER_NAME_PLATFORMS],
+                    )
 
         if key == arcade.key.Q:
-            self.energy += 1
+            if self.energy < 3:
+                self.energy += 1
 
         if key == arcade.key.R:
             self.player_sprite.center_x = self.tile_map.tile_width * TILE_SCALING * PLAYER_START_X
@@ -792,8 +1198,44 @@ class GameView(arcade.View):
 
         self.camera.move_to(player_centered, speed)
 
+    def activate_quest(self, villager):
+        """Function which handles the quest activation."""
+        quest = QUEST_REF[villager.id]
+        self.start_dialogue = quest["dialogue"]
+        self.quests[villager.id] = {
+            "quest_id": villager.id,
+            "villager_pos": [villager.center_x, villager.center_y],
+            "quest_item": quest["item"],
+            "num_needed": quest["number"],
+            "dialogue_time": 2,
+        }
+        self.latest_quest = self.quests[villager.id]
+
+    def check_quest_complete(self, villager):
+        if self.inventory_quest[villager.id]["number"] < self.quests[villager.id]["num_needed"]:
+            self.check_quest = self.quests[villager.id]
+            self.not_complete_time = 2
+        else:
+            self.end_quest(villager)
+    
+    def end_quest(self, villager):
+        self.finished_quest = self.quests.pop(villager.id)
+        self.finished_quest["dialogue_time"] = 2
+        self.quest_ended = True
+        self.completed_quests.append(villager.id)
+        self.inventory_quest[villager.id]["number"] -= self.finished_quest["num_needed"]
+        if QUEST_REF[villager.id]["reward_item"] != "Energy":
+            self.inventory_other[villager.id]["number"] += QUEST_REF[villager.id]["reward_num"]
+        else:
+            if self.energy < 3:
+                self.energy += QUEST_REF[villager.id]["reward_num"]
+
+
     def on_update(self, delta_time):
         """Movement and game logic"""
+
+        # Reset the interactable text
+        self.can_interact = False
 
         self.delta_time = delta_time
         # Move the player
@@ -829,109 +1271,297 @@ class GameView(arcade.View):
             [
                 LAYER_NAME_PLAYER,
                 LAYER_NAME_BACKGROUND,
-                LAYER_NAME_VILLAGERS,
-                LAYER_NAME_ORBS,
-                LAYER_NAME_ENEMIES
-            ],
+            ] + self.available_layers
         )
+                
 
-        # Update moving platforms
-        self.scene.update(
-            [
-                LAYER_NAME_MOVING_PLATFORMS,
-                LAYER_NAME_ENEMIES
-            ],
-        )
+
+        # Update moving platforms and enemies
+        if self.map_has_enemies:
+            self.scene.update(
+                [
+                    LAYER_NAME_MOVING_PLATFORMS,
+                    LAYER_NAME_ENEMIES
+                ],
+            )
+        else:
+            self.scene.update(
+                [LAYER_NAME_MOVING_PLATFORMS]
+            )
+
 
         # Update villagers
-        for villager in self.scene[LAYER_NAME_VILLAGERS]:
-            villager.update(player_pos=(self.player_sprite.center_x, self.player_sprite.center_y), tile_map=self.tile_map)
+        try:
+            for villager in self.scene[LAYER_NAME_VILLAGERS]:
+                villager.update(player_pos=(self.player_sprite.center_x, self.player_sprite.center_y), tile_map=self.tile_map)
+        except:
+            pass
 
         # See if the enemy hit a boundary and needs to reverse direction.
-        for enemy in self.scene[LAYER_NAME_ENEMIES]:
-            if (
-                enemy.boundary_right
-                and enemy.right > enemy.boundary_right*TILE_SCALING*self.tile_map.tile_width
-                and enemy.change_x > 0
-            ):
-                enemy.change_x *= -1
+        try:
+            for enemy in self.scene[LAYER_NAME_ENEMIES]:
+                if (
+                    enemy.boundary_right
+                    and enemy.right > enemy.boundary_right*TILE_SCALING*self.tile_map.tile_width
+                    and enemy.change_x > 0
+                ):
+                    enemy.change_x *= -1
 
-            if (
-                enemy.boundary_left
-                and enemy.left < enemy.boundary_left*TILE_SCALING*self.tile_map.tile_width
-                and enemy.change_x < 0
-            ):
-                enemy.change_x *= -1
+                if (
+                    enemy.boundary_left
+                    and enemy.left < enemy.boundary_left*TILE_SCALING*self.tile_map.tile_width
+                    and enemy.change_x < 0
+                ):
+                    enemy.change_x *= -1
+        except:
+            pass
 
         if self.shape == 0:
-            interactable_villager = None
-            # Check if in range of villager
-            for villager in self.scene[LAYER_NAME_VILLAGERS]:
-                if villager.interactable:
-                    self.can_interact = True
-                    interactable_villager = villager.id
-                    break
-                else:
-                    villager.wave = False
-                    self.can_interact = False
-
-            # Check for interaction with villager
-            if self.interact:
+            try:
+                interactable_villager = None
+                # Check if in range of villager
                 for villager in self.scene[LAYER_NAME_VILLAGERS]:
-                    if villager.id == interactable_villager:
-                        villager.wave = True
-                        self.energy += 1
-                        print("please")
+                    if villager.interactable:
+                        self.can_interact = True
+                        interactable_villager = villager.id
+                        break
+                    else:
+                        villager.wave = False
+            except:
+                pass
+            try:        
+                # Check for interaction with villager
+                    if self.interact:
+                        for villager in self.scene[LAYER_NAME_VILLAGERS]:
+                            if villager.id == interactable_villager:
+                                if villager.id not in self.completed_quests:
+                                    if villager.id not in self.quests.keys():
+                                        villager.wave = True
+                                        self.activate_quest(villager)
+                                    else:
+                                        self.check_quest_complete(villager)
+                                else:
+                                    villager.wave = True
+            except:
+                pass
+
+        # Check if interaction possible with door
+        for id, info in self.doors.items():
+            if calculate_distance(self.player_sprite.position, info["pos"]) < 1*TILE_SCALING*self.tile_map.tile_width:
+                interactable_door = id
+                self.can_interact = True
+                break
+            interactable_door = None
+            
+            
+        if self.interact and self.can_interact and interactable_door != None:
+            self.level = self.doors[interactable_door]["warp"]
+            self.spawnpoint = self.doors[interactable_door]["dest"]
+            self.interact = False
+            self.setup()
+                            
+        # Check if interaction possible with statue
+        try:
+            if len(arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_STATUES])) > 0:
+                self.can_interact = True
+        except:
+            pass
+        
 
         # Check for collisions with the statue
-        if self.interact:
-            player_collision_list = arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_STATUES])
-            for collision in player_collision_list:
-                if self.prev_spawnpoint != None:
-                    self.scene[LAYER_NAME_STATUES].append(self.prev_spawnpoint)
-                    self.scene[LAYER_NAME_SPAWNPOINT].clear()
-                if abs(collision.center_x - self.player_sprite.center_x) < self.tile_map.tile_width * TILE_SCALING * 2:
-                    self.spawnpoint = (collision.center_x / (self.tile_map.tile_width * TILE_SCALING), collision.center_y / (self.tile_map.tile_width * TILE_SCALING) - 1)
-                    self.scene[LAYER_NAME_SPAWNPOINT].append(collision)
-                    self.scene[LAYER_NAME_STATUES].remove(collision)
-                    self.prev_spawnpoint = collision
-                    print(f"New spawnpoint at {self.spawnpoint}")
-                    self.energy = 3
-            self.interact = False
+        try:
+            if self.interact:
+                player_collision_list = arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_STATUES])
+                for collision in player_collision_list:
+                    if self.prev_spawnpoint != None:
+                        self.scene[LAYER_NAME_STATUES].append(self.prev_spawnpoint)
+                        self.scene[LAYER_NAME_SPAWNPOINT].clear()
+                    if abs(collision.center_x - self.player_sprite.center_x) < self.tile_map.tile_width * TILE_SCALING * 2:
+                        self.spawnpoint = (collision.center_x / (self.tile_map.tile_width * TILE_SCALING), collision.center_y / (self.tile_map.tile_width * TILE_SCALING) - 1)
+                        self.scene[LAYER_NAME_SPAWNPOINT].append(collision)
+                        self.scene[LAYER_NAME_STATUES].remove(collision)
+                        self.prev_spawnpoint = collision
+                        self.energy = 3
+                self.interact = False
+        except:
+            pass
 
         # Check for collisions with energy orbs
-        player_collision_list = arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_ORBS])
-        for collision in player_collision_list:
-            if collision.type == "Energy":
-                self.energy += 1
-                self.scene[LAYER_NAME_ORBS].remove(collision)
+        try:
+            if self.energy < 3:
+                player_collision_list = arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_ORBS])
+                for collision in player_collision_list:
+                    if collision.type == "Energy":
+                        self.energy += 1
+                        self.scene[LAYER_NAME_ORBS].remove(collision)
+        except:
+            pass
         
+        # Check for collisions with keys
+        player_collision_list = arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_COLLECTIBLES])
+        for collision in player_collision_list:
+            if collision.type == "Key":
+                
+                self.keys_obtained.append(collision.id)
+                self.scene[LAYER_NAME_COLLECTIBLES].remove(collision)
+
+        # Check for collisions with locked door
+        try:
+            player_collision_list = arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_LOCKED_DOORS])
+            for collision in player_collision_list:
+                if str(collision.id) in self.keys_obtained:
+                    for door_barrier in self.scene[LAYER_NAME_DOOR_BARRIERS_CLOSED]:
+                        self.scene[LAYER_NAME_DOOR_BARRIERS_OPEN].append(door_barrier)
+                        self.scene[LAYER_NAME_DOOR_BARRIERS_CLOSED].remove(door_barrier)
+                    collision.open = True
+                else:
+                    self.missing_key_text = 2
+                    for door_barrier in self.scene[LAYER_NAME_DOOR_BARRIERS_OPEN]:
+                        self.scene[LAYER_NAME_DOOR_BARRIERS_CLOSED].append(door_barrier)
+                        self.scene[LAYER_NAME_DOOR_BARRIERS_OPEN].remove(door_barrier)
+
+        except:
+            pass
+
+        # Quest item collision processing
+        if self.in_quest:
+            quest_req_apples = False
+            quest_req_cards = False
+            quest_req_documents = False
+            for id, info in self.quests.items():
+                if info["quest_item"] == "Apple":
+                    quest_req_apples = True
+                    quest_id_apples = id
+                    break
+                if info["quest_item"] == "Card":
+                    quest_req_cards = True
+                    quest_id_cards = id
+                if info["quest_item"] == "Document":
+                    quest_req_documents = True
+                    quest_id_documents = id
+            
+            
+            player_collision_list = arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_COLLECTIBLES])
+            for collision in player_collision_list:
+                if quest_req_apples:
+                    # Check for collisions with apples
+                    if collision.type == "Apple":
+                        self.inventory_quest[quest_id_apples]["number"] += 1
+                        self.scene[LAYER_NAME_COLLECTIBLES].remove(collision)
+                if quest_req_cards:
+                    # Check for collisions with cards
+                    if collision.type == "Card":
+                        self.inventory_quest[quest_id_cards]["number"] += 1
+                        self.scene[LAYER_NAME_COLLECTIBLES].remove(collision)
+                if quest_req_documents:
+                    # Check for collisions with documents
+                    if collision.type == "Document":
+                        self.inventory_quest[quest_id_documents]["number"] += 1
+                        self.scene[LAYER_NAME_COLLECTIBLES].remove(collision)
+
+
+        # Update energy bar
+        for energy_bar in self.gui_scene[LAYER_NAME_ENERGY]:
+            energy_bar.texture = arcade.load_texture(f"{MAIN_PATH}/assets/GUI/Energy/{self.energy}.png")
+
+
         # Check for collisions with enemies
-        player_collision_list = arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_ENEMIES])
-        if len(player_collision_list) > 0:
-            self.player_sprite.center_x = self.tile_map.tile_width * TILE_SCALING * self.spawnpoint[0]
-            self.player_sprite.center_y = self.tile_map.tile_height * TILE_SCALING * self.spawnpoint[1]
+        try:
+            player_collision_list = arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_ENEMIES])
+            if len(player_collision_list) > 0:
+                if self.cooldown <= 0:
+                    self.health -= 1
+                    self.cooldown = 1
+                    self.player_sprite.change_y = PLAYER_JUMP_SPEED
+        except:
+            pass
+
+        # Update health bar
+        for health_bar in self.gui_scene[LAYER_NAME_HEALTH]:
+            health_bar.texture = arcade.load_texture(f"{MAIN_PATH}/assets/GUI/Health/{self.health}.png")
 
         # Reveal tunnels/cave when player approaches
-        for tile in self.scene[LAYER_NAME_CAVE]:
-            distance_to_player = calculate_distance([self.player_sprite.center_x, self.player_sprite.center_y], [tile.center_x, tile.center_y])
-            if distance_to_player < 10*TILE_SCALING*self.tile_map.tile_width:
-                tile.alpha = 255*(max(distance_to_player-5*TILE_SCALING*self.tile_map.tile_width, 0)) / (10*TILE_SCALING*self.tile_map.tile_width)
+        try:
+            for tile in self.scene[LAYER_NAME_CAVE]:
+                distance_to_player = calculate_distance([self.player_sprite.center_x, self.player_sprite.center_y], [tile.center_x, tile.center_y])
+                if distance_to_player < 10*TILE_SCALING*self.tile_map.tile_width:
+                    tile.alpha = 255*(max(distance_to_player-5*TILE_SCALING*self.tile_map.tile_width, 0)) / (10*TILE_SCALING*self.tile_map.tile_width)
+        except:
+            pass
 
         # Check for collision with goal/warp portal
-        if len(arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_GOAL])) > 0:
-            self.level += 1
-            self.setup()
-
-        if len(arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_DEATH])) > 0:
+        try:
+            if len(arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_GOAL])) > 0:
+                self.level += 1
+                self.setup()
+        except:
+            pass
+        
+        # Check for collision with death layer (spikes etc)
+        try:
+            if len(arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_DEATH])) > 0:
+                self.player_sprite.center_x = self.tile_map.tile_width * TILE_SCALING * self.spawnpoint[0]
+                self.player_sprite.center_y = self.tile_map.tile_height * TILE_SCALING * self.spawnpoint[1]
+        except:
+            pass
+        
+        # Run player death animation
+        if self.player_sprite.center_y < 0 or self.health <= 0:
+            self.health = 3
+            self.player_sprite.is_dead = True
+            
+        
+        # Once death animation over respawn
+        if self.player_sprite.dying and self.player_sprite.dying != self.player_sprite.is_dead:
             self.player_sprite.center_x = self.tile_map.tile_width * TILE_SCALING * self.spawnpoint[0]
             self.player_sprite.center_y = self.tile_map.tile_height * TILE_SCALING * self.spawnpoint[1]
+            
+            self.player_sprite.dying = False
 
-        if self.player_sprite.center_y < 0:
-            self.player_sprite.center_x = self.tile_map.tile_width * TILE_SCALING * self.spawnpoint[0]
-            self.player_sprite.center_y = self.tile_map.tile_height * TILE_SCALING * self.spawnpoint[1]
+        if len(self.quests) > 0:
+            self.in_quest = True
+        else:
+            self.in_quest = False
 
-            print(f"({self.player_sprite.center_x}, {self.player_sprite.center_y})")
+        # Reducing all of the timer variables
+        if self.cooldown > 0:
+            self.cooldown -= delta_time
+        else:
+            self.cooldown = 0
+        
+        if self.not_complete_time > 0:
+            self.not_complete_time -= delta_time
+        else:
+            self.not_complete_time = 0
+
+        if self.missing_key_text > 0:
+            self.missing_key_text -= delta_time
+        else:
+            self.missing_key_text = 0
+
+        # If these variables exist, i.e. after a quest has been started,
+        # Run the timer code
+        # Otherwise, just ignore it
+        try:
+            if self.latest_quest["dialogue_time"] > 0:
+                self.latest_quest["dialogue_time"] -= delta_time
+            else:
+                self.latest_quest["dialogue_time"] = 0
+            
+            if self.finished_quest["dialogue_time"] > 0:
+                self.finished_quest["dialogue_time"] -= delta_time
+            else:
+                self.finished_quest = 0
+
+            # Once the timer for the quest end dialogue goes to 0, 
+            # delete the finished quest.
+            if self.finished_quest["dialogue_time"] <= 0 and self.quest_ended:
+                self.finished_quest = None
+                self.quest_ended = False
+  
+        except:
+            pass
+        
         self.center_camera_to_player()
 
 # Main Program
@@ -939,7 +1569,7 @@ class GameView(arcade.View):
 def main():
     """Main Function"""
     window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
-    start_view = GameView()
+    start_view = MainMenu()
     window.show_view(start_view)
     #start_view.setup()
     arcade.run()
