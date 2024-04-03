@@ -12,29 +12,55 @@
         "0.tmx": {
             "expandedObjectLayers": [
                 12,
-                10,
-                11
+                11,
+                10
             ],
             "scale": 1,
             "selectedLayer": 7,
             "viewCenter": {
-                "x": 503,
+                "x": 504,
                 "y": 78
             }
         },
         "1.1.tmx": {
             "expandedObjectLayers": [
+                21,
+                5,
                 14,
-                19,
                 17,
                 6,
-                5
+                19
             ],
-            "scale": 0.5,
-            "selectedLayer": 0,
+            "scale": 2,
+            "selectedLayer": 16,
             "viewCenter": {
-                "x": 286,
-                "y": 1836
+                "x": 4383.5,
+                "y": 1398
+            }
+        },
+        "1.2.tmx": {
+            "expandedObjectLayers": [
+                5,
+                13
+            ],
+            "scale": 3.7406249999999996,
+            "selectedLayer": 13,
+            "viewCenter": {
+                "x": 160.1336675020886,
+                "y": 160.13366750208857
+            }
+        },
+        "1.3.tmx": {
+            "expandedObjectLayers": [
+                7,
+                6,
+                10
+            ],
+            "scale": 5.5,
+            "selectedLayer": 11,
+            "viewCenter": {
+                "x": 193.09090909090912,
+                "y": 220.1818181818182
             }
         },
         "1.4.tmx": {
@@ -44,27 +70,30 @@
                 6
             ],
             "scale": 4,
-            "selectedLayer": 3,
+            "selectedLayer": 6,
             "viewCenter": {
-                "x": 193,
-                "y": 224.5
+                "x": 192.25,
+                "y": 223.75
             }
         },
         "1.tmx": {
             "scale": 0.4769,
             "selectedLayer": 8,
             "viewCenter": {
-                "x": 895.3659048018453,
-                "y": 384.7766827427133
+                "x": 891.1721534912979,
+                "y": 381.631369259803
             }
         },
         "2.1.tmx": {
             "scale": 0.75,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 90.66666666666663,
-                "y": 1302.6666666666665
+                "x": 88,
+                "y": 1297.3333333333333
             }
+        },
+        "Backdrops.tsx": {
+            "scaleInDock": 1
         },
         "C:/Users/devin/AppData/Local/Programs/Python/Python311/Lib/site-packages/arcade/resources/tiled_maps/map_with_ladders.json": {
             "expandedObjectLayers": [
@@ -98,7 +127,7 @@
         }
     },
     "last.exportedFilePath": "//wbfp02.westlake.local/shomes/ds21616/Documents/13DTP/Assessment/91906 - DevinShen/maps",
-    "last.imagePath": "//wbfp02.westlake.local/shomes/ds21616/Documents/13DTP/Assessment/91906 - DevinShen/assets/Tiles/Sky",
+    "last.imagePath": "D:/Devin stuff/13DTP/Assessment/91906---DevinShen/assets/Tiles/Interior",
     "map.fixedSize": true,
     "map.height": 20,
     "map.lastUsedExportFilter": "All Files (*)",
@@ -112,8 +141,10 @@
         "1.tmx"
     ],
     "project": "AtaraxiaMaps.tiled-project",
-    "property.type": "string",
+    "property.type": "int",
     "recentFiles": [
+        "1.4.tmx",
+        "1.1.tmx",
         "0.tmx",
         "1.tmx",
         "Testing Tiles.tsx",

@@ -5,14 +5,15 @@ import arcade, os, random, math
 MAIN_PATH = os.path.dirname(os.path.abspath(__file__))
 
 # Window Settings
-SCREEN_WIDTH = 1280
-SCREEN_HEIGHT = 720
+SCREEN_WIDTH = 1920
+SCREEN_HEIGHT = 1080
 SCREEN_TITLE = "Ataraxia V1"
 
 # Sprite Scaling
 CHARACTER_SCALING = 5
 TILE_SCALING = 5
 COLLECTIBLE_SCALING = 2
+KNIFE_SCALING = 3
 
 # Sprite facing direction
 RIGHT_FACING = 0
@@ -31,6 +32,7 @@ LAYER_NAME_COLLECTIBLES = "Collectibles"
 LAYER_NAME_WARP_DOORS = "Warp Doors"
 LAYER_NAME_LOCKED_DOORS = "Locked Doors"
 LAYER_NAME_KNIFE = "Knife"
+LAYER_NAME_GOAL = "Goal"
 
 # Tile Layers
 LAYER_NAME_PLATFORMS = "Platforms"
@@ -39,7 +41,6 @@ LAYER_NAME_LADDERS = "Ladders"
 LAYER_NAME_BACKGROUND = "Background"
 LAYER_NAME_STATUES = "Statues"
 LAYER_NAME_SPAWNPOINT = "Current Statue"
-LAYER_NAME_GOAL = "Goal"
 LAYER_NAME_CAVE = "Cave"
 LAYER_NAME_DEATH = "Death"
 LAYER_NAME_DOOR_BARRIERS_OPEN = "Door Barrier Open"
@@ -59,10 +60,14 @@ PLAYER_JUMP_SPEED = 20
 PLAYER_START_X = 3
 PLAYER_START_Y = 18
 
+# Timing constants
+KNIFE_COOLDOWN = 0.5
+
 # Dictionary References
 QUEST_REF = {
     "000": {
         "dialogue": "I'm getting too old to climb trees, can you please pick 3 apples for me?",
+        "dialogue_time": 3,
         "item": "Apple",
         "number": 3,
         "reward_item": "Energy",
@@ -70,6 +75,7 @@ QUEST_REF = {
     },
     "001": {
         "dialogue": "Heya, I dropped my card on the other side of that wraith over there, could you grab it for me?",
+        "dialogue_time": 4,
         "item": "Card",
         "number": 1,
         "reward_item": "Energy",
@@ -77,6 +83,7 @@ QUEST_REF = {
     },
     "002": {
         "dialogue": "I've been looking for a legal document in my basement, can you find it for me? I'll give you this knife if you find it.",
+        "dialogue_time": 5,
         "item": "Document",
         "number": 1,
         "reward_item": "Knife",
@@ -84,6 +91,7 @@ QUEST_REF = {
     },
     "003": {
         "dialogue": "Please kill the wraith over there, we need to be able to access the church. I can grant you access if you kill it.",
+        "dialogue_time": 5,
         "item": "Ectoplasm",
         "number": 1,
         "reward_item": "Church Key",
@@ -291,6 +299,31 @@ class Key(Collectible):
         self.id = None
         self.texture = self.idle_textures[0][0]
 
+# Secrets sprite classes
+# Secret statuette class
+class Statuette(Collectible):
+    """Sprite for statuette (secret)"""
+    def __init__(self):
+        super().__init__("Statuette")
+        self.type = None
+        self.texture = self.idle_textures[0][0]
+
+class DiamondPickaxe(Collectible):
+    """Sprite for diamond pickaxe (secret)"""
+    def __init__(self):
+        super().__init__("DiamondPickaxe")
+        self.type = None
+        self.texture = self.idle_textures[0][0]
+
+
+# Class for the level end portal sprite
+class GoalPortal(Entity):
+    """Sprite for next level portal"""
+    def __init__(self):
+        super().__init__("InanimateObjects", "GoalPortal", ["Idle"])
+        self.texture = self.idle_textures[0][0]
+        self.warp = None
+        self.dest = None
 
 # Class for changing locked door textures
 class LockedDoor(Entity):
@@ -320,15 +353,18 @@ class Knife(Entity):
         super().__init__("InanimateObjects", "Knife", ["Idle"])
         self.cur_texture = 0
         self.swing_finished = False
+        self.scale = KNIFE_SCALING
     
     def update_animation(self, delta_time: float = 1 / 60):
+         # Change direction if needed
         if not self.swing_finished:
             self.texture = self.idle_textures[self.cur_texture // 3][self.facing_direction]
             self.cur_texture += 1
         if self.cur_texture > 5:
             self.swing_finished = True
             
-        
+
+
         
 
 # Player Class
@@ -488,6 +524,7 @@ class Enemy(Entity):
     def __init__(self, category_folder, sprite_folder):
         # Setup parent class
         super().__init__(category_folder, sprite_folder, ["Idle", "Walk", "Death"])
+        self.drop = None
     
     def update_animation(self, delta_time: float = 1 / 60):
 
@@ -564,6 +601,7 @@ class GameView(arcade.View):
         self.running = False
         self.jump_needs_reset = False
         self.interact = False
+        self.swing_knife = False
 
         # Player stats (health, energy, etc)
         self.health = 3
@@ -571,6 +609,7 @@ class GameView(arcade.View):
         self.shape = 0
         self.fly_speed = 0
         self.thrust = 10
+        self.can_knife = True
         self.inventory_quest = {
             "000": {"name": "Apples", "number": 0},
             "001": {"name": "Cards", "number": 0},
@@ -583,6 +622,7 @@ class GameView(arcade.View):
             "003": {"name": "Church Key", "type": "Key", "number": 0}
         }
         self.keys_obtained = []
+        self.secrets_found = []
 
         # Quest variables
         self.quests = {}
@@ -597,16 +637,19 @@ class GameView(arcade.View):
         # Sensing variables
         self.can_interact = False
         self.is_flying = False
+       
 
         # Control variables
         self.delta_time = 0
         self.time_since_ground = 0
         self.cooldown = 0
+        self.knife_timer = 0
         self.map_has_villagers = None
         self.map_has_orbs = None
         self.map_has_enemies = None
         self.available_layers = []
         self.missing_key_text = 0
+        self.secret_found_text = 0
 
         # Warp variables
         self.doors = {}
@@ -742,6 +785,8 @@ class GameView(arcade.View):
                     enemy.boundary_left = enemy_object.properties["boundary_left"]
                 if "boundary_right" in enemy_object.properties:
                     enemy.boundary_right = enemy_object.properties["boundary_right"]
+                if "drop" in enemy_object.properties:
+                    enemy.drop = enemy_object.properties["drop"]
                 self.map_has_enemies = True
                 self.scene.add_sprite(LAYER_NAME_ENEMIES, enemy)
         except:
@@ -749,6 +794,29 @@ class GameView(arcade.View):
             
 
         # Add inanimate objects
+        # Add in end portal/s
+        try:
+            goal_layer = self.tile_map.object_lists[LAYER_NAME_GOAL]
+            for goal_object in goal_layer:
+                cartesian = self.tile_map.get_cartesian(
+                    goal_object.shape[0], goal_object.shape[1]
+                )
+                goal = GoalPortal()
+                goal.center_x = math.floor(
+                    (cartesian[0]+0.5) * TILE_SCALING * self.tile_map.tile_width
+                )
+                goal.center_y = math.floor(
+                    (cartesian[1]+0.5) * (self.tile_map.tile_height * TILE_SCALING)
+                )
+                warp = goal_object.properties["warp"]
+                dest = [goal_object.properties["dest_x"], goal_object.properties["dest_y"]]
+                goal.warp = warp
+                goal.dest = dest
+                self.scene.add_sprite(LAYER_NAME_GOAL, goal)
+        except:
+            pass
+                
+        
         # Add in energy orbs
         try:
             orbs_layer = self.tile_map.object_lists[LAYER_NAME_ORBS]
@@ -769,7 +837,7 @@ class GameView(arcade.View):
         except:
             self.map_has_orbs = False
 
-        # Add in quest collectibles
+        # Add in collectibles which include quests and secrets
         try:
             collectible_layer = self.tile_map.object_lists[LAYER_NAME_COLLECTIBLES]
             for collectible_object in collectible_layer:
@@ -786,14 +854,22 @@ class GameView(arcade.View):
                 if collectible_type == "Key":
                     collectible = Key()
                     collectible.id = collectible_object.properties["unlocks"]
-                
+                if collectible_type == "Secret":
+                    collectible_name = collectible_object.properties["name"]
+                    if collectible_name == "Statuette":
+                        collectible = Statuette()
+                        collectible.name = collectible_name
+                    if collectible_name == "Diamond Pickaxe":
+                        collectible = DiamondPickaxe()
+                        collectible.name = collectible_name
+
+                collectible.type = collectible_type
                 collectible.center_x = math.floor(
                     (cartesian[0]+0.5) * TILE_SCALING * self.tile_map.tile_width
                 )
                 collectible.center_y = math.floor(
                     (cartesian[1]+0.5) * (self.tile_map.tile_height * TILE_SCALING)-TILE_SCALING
                 )
-                collectible.type = collectible_object.properties["type"]
                 self.scene.add_sprite(LAYER_NAME_COLLECTIBLES, collectible)
         except:
             pass
@@ -927,6 +1003,7 @@ class GameView(arcade.View):
         self.scene.draw(pixelated=True)
 
         # Actually draw the floating text
+        
         try:
             for text in self.text_layer:
                 cartesian = self.tile_map.get_cartesian(
@@ -942,6 +1019,8 @@ class GameView(arcade.View):
                     cartesian[1]*TILE_SCALING*self.tile_map.tile_height,
                     colour,
                     14,
+                    anchor_x="center",
+                    anchor_y="center"
                 )
         except:
             pass
@@ -950,6 +1029,13 @@ class GameView(arcade.View):
         if self.in_quest:
             try:
                 if self.latest_quest["dialogue_time"] > 0:
+                    arcade.draw_rectangle_filled(
+                        self.latest_quest["villager_pos"][0],
+                        self.latest_quest["villager_pos"][1]+1.5*TILE_SCALING*self.tile_map.tile_width,
+                        len(self.start_dialogue)*10+10,
+                        20,
+                        (255, 255, 255),
+                    )
                     arcade.draw_text(
                         self.start_dialogue,
                         self.latest_quest["villager_pos"][0],
@@ -964,6 +1050,13 @@ class GameView(arcade.View):
         
         # If quest not complete then draw this
         if self.not_complete_time > 0:
+            arcade.draw_rectangle_filled(
+                self.check_quest["villager_pos"][0],
+                self.check_quest["villager_pos"][1]+1.5*TILE_SCALING*self.tile_map.tile_width,
+                380,
+                20,
+                (255, 255, 255)
+            )
             arcade.draw_text(
                 "Bruh you're not done yet",
                 self.check_quest["villager_pos"][0],
@@ -977,6 +1070,13 @@ class GameView(arcade.View):
         # If quest complete draw this
         if self.finished_quest != None:
             if self.finished_quest["dialogue_time"] > 0:
+                arcade.draw_rectangle_filled(
+                    self.finished_quest["villager_pos"][0],
+                    self.finished_quest["villager_pos"][1]+1.5*TILE_SCALING*self.tile_map.tile_width,
+                    280,
+                    35,
+                    (255, 255, 255),
+                )
                 arcade.draw_text(
                     "Thanks, here is your reward",
                     self.finished_quest["villager_pos"][0],
@@ -989,13 +1089,40 @@ class GameView(arcade.View):
 
         # If key missing draw this
         if self.missing_key_text > 0:
+            arcade.draw_rectangle_filled(
+                self.player_sprite.center_x,
+                self.player_sprite.center_y+1.5*TILE_SCALING*self.tile_map.tile_height,
+                125,
+                20,
+                (255, 255, 255),
+            )
             arcade.draw_text(
                 "Missing key",
                 self.player_sprite.center_x,
                 self.player_sprite.center_y+1.5*TILE_SCALING*self.tile_map.tile_height,
                 (0, 0, 0),
                 15,
-                anchor_x = "center"
+                anchor_x = "center",
+                anchor_y="center"
+            )
+
+        # If secret found then draw this
+        if self.secret_found_text > 0:
+            arcade.draw_rectangle_filled(
+                self.player_sprite.center_x,
+                self.player_sprite.center_y+1.5*TILE_SCALING*self.tile_map.tile_height,
+                125,
+                20,
+                (255, 255, 255),
+            )
+            arcade.draw_text(
+                "Secret Found",
+                self.player_sprite.center_x,
+                self.player_sprite.center_y+1.5*TILE_SCALING*self.tile_map.tile_height,
+                (0, 0, 0),
+                15,
+                anchor_x = "center",
+                anchor_y="center"
             )
 
         # Activate the GUI camera to draw GUI elements
@@ -1008,24 +1135,42 @@ class GameView(arcade.View):
 
         # If interact is possible then draw this text
         if self.can_interact:
+            arcade.draw_rectangle_filled(
+                SCREEN_WIDTH*0.8,
+                50,
+                200,
+                20,
+                (0, 0, 0),
+            )
             arcade.draw_text(
                 "Press 'f' to interact",
                 SCREEN_WIDTH*0.8,
                 50,
                 (255, 255, 255),
                 18,
+                anchor_x="center",
+                anchor_y="center"
             )
         
         # If in quest then draw the current quest progress
         if self.in_quest:
             count = 0
             for id, info in self.quests.items():
+                arcade.draw_rectangle_filled(
+                    SCREEN_WIDTH-24*TILE_SCALING,
+                    SCREEN_HEIGHT-(60+count*9)*TILE_SCALING,
+                    200,
+                    30,
+                    (255, 255, 255)
+                )
                 arcade.draw_text(
                     f"{info['quest_item']}: {self.inventory_quest[id]['number']}/{info['num_needed']}",
-                    SCREEN_WIDTH-48*TILE_SCALING,
+                    SCREEN_WIDTH-24*TILE_SCALING,
                     SCREEN_HEIGHT-(60+count*9)*TILE_SCALING,
                     (0, 0, 0),
                     20,
+                    anchor_x="center",
+                    anchor_y="center"
                 )
                 count += 1
         
@@ -1183,7 +1328,7 @@ class GameView(arcade.View):
             self.player_sprite.center_y = self.tile_map.tile_height * TILE_SCALING * PLAYER_START_Y
         self.process_keychange()
 
-        if key == arcade.key.Z and self.inventory_other["002"]["number"] > 0:
+        if key == arcade.key.Z and self.inventory_other["002"]["number"] > 0 and self.can_knife:
             self.swing_knife = True
 
     def on_key_release(self, key, modifiers):
@@ -1209,6 +1354,9 @@ class GameView(arcade.View):
         if key == arcade.key.F:
             self.interact = False
 
+        if key == arcade.key.Z and self.inventory_other["002"]["number"] > 0:
+            self.swing_knife = False
+
         self.process_keychange()
 
     def center_camera_to_player(self, speed=0.2):
@@ -1231,7 +1379,7 @@ class GameView(arcade.View):
             "villager_pos": [villager.center_x, villager.center_y],
             "quest_item": quest["item"],
             "num_needed": quest["number"],
-            "dialogue_time": 2,
+            "dialogue_time": quest["dialogue_time"],
         }
         self.latest_quest = self.quests[villager.id]
 
@@ -1289,6 +1437,44 @@ class GameView(arcade.View):
             self.player_sprite.is_on_ladder = False
             self.process_keychange()
 
+        # Check if knife is being swung
+        if self.can_knife:
+            if self.swing_knife:
+                knife = Knife()
+                if self.player_sprite.facing_direction == RIGHT_FACING:
+                    knife.center_x = self.player_sprite.center_x + 0.5*TILE_SCALING*self.tile_map.tile_width
+                    knife.facing_direction = RIGHT_FACING
+                else:
+                    knife.center_x = self.player_sprite.center_x - 0.5*TILE_SCALING*self.tile_map.tile_width
+                    knife.facing_direction = LEFT_FACING
+                knife.center_y = self.player_sprite.center_y
+                    
+                self.scene.add_sprite(LAYER_NAME_KNIFE, knife)
+                self.swing_knife = False
+                self.can_knife = False
+        else:
+            self.knife_timer += delta_time
+            if self.knife_timer >= KNIFE_COOLDOWN:
+                self.can_knife = True
+                self.knife_timer = 0    
+
+        # Remove knife after it has finished its swing
+        # If an error occurs that just means the knife doesn't exist and we can ignore.
+        try:
+            for knife in self.scene[LAYER_NAME_KNIFE]:
+                if self.player_sprite.facing_direction == RIGHT_FACING:
+                    knife.center_x = self.player_sprite.center_x + 0.5*TILE_SCALING*self.tile_map.tile_width
+                    knife.facing_direction = RIGHT_FACING
+                else:
+                    knife.center_x = self.player_sprite.center_x - 0.5*TILE_SCALING*self.tile_map.tile_width
+                    knife.facing_direction = LEFT_FACING
+                knife.center_y = self.player_sprite.center_y
+                knife.update_animation(delta_time)
+                if knife.swing_finished:
+                    self.scene[LAYER_NAME_KNIFE].remove(knife)
+        except:
+            pass
+
         # Update animations for other things
         self.scene.update_animation(
             delta_time,
@@ -1339,7 +1525,9 @@ class GameView(arcade.View):
                     enemy.change_x *= -1
         except:
             pass
+        
 
+        # Only try to check interaction with villagers if in human shape
         if self.shape == 0:
             try:
                 interactable_villager = None
@@ -1376,13 +1564,38 @@ class GameView(arcade.View):
                 self.can_interact = True
                 break
             interactable_door = None
-            
-            
+        
+        # Level changing mechanics
+        # Check if actually interacting with door
         if self.interact and self.can_interact and interactable_door != None:
-            self.level = self.doors[interactable_door]["warp"]
-            self.spawnpoint = self.doors[interactable_door]["dest"]
-            self.interact = False
-            self.setup()
+            if self.doors[interactable_door]["key_req"] == "None":
+                self.level = self.doors[interactable_door]["warp"]
+                self.spawnpoint = self.doors[interactable_door]["dest"]
+                self.interact = False
+                self.setup()
+            else:
+                has_key = False
+                for item in self.inventory_other.values():
+                    if item["name"] == self.doors[interactable_door]["key_req"] and item["number"] > 0:
+                        has_key = True
+                        break
+                if has_key:
+                    self.level = self.doors[interactable_door]["warp"]
+                    self.spawnpoint = self.doors[interactable_door]["dest"]
+                    self.interact = False
+                    self.setup()
+                else:
+                    self.missing_key_text = 2
+
+        # Check for collision with goal/warp portal
+        try:
+            player_collision_list = arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_GOAL])
+            for collision in player_collision_list:
+                self.level = collision.warp
+                self.spawnpoint = collision.dest
+                self.setup()
+        except:
+            pass
                             
         # Check if interaction possible with statue
         try:
@@ -1421,13 +1634,20 @@ class GameView(arcade.View):
         except:
             pass
         
-        # Check for collisions with keys
-        player_collision_list = arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_COLLECTIBLES])
-        for collision in player_collision_list:
-            if collision.type == "Key":
-                
-                self.keys_obtained.append(collision.id)
-                self.scene[LAYER_NAME_COLLECTIBLES].remove(collision)
+        # Check for collisions with keys or secrets
+        try:
+            player_collision_list = arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_COLLECTIBLES])
+            for collision in player_collision_list:
+                if collision.type == "Key":
+                    self.keys_obtained.append(collision.id)
+                    self.scene[LAYER_NAME_COLLECTIBLES].remove(collision)
+                if collision.type == "Secret":
+                    self.secret_found_text = 2
+                    self.secrets_found.append(collision.name)
+                    self.scene[LAYER_NAME_COLLECTIBLES].remove(collision)
+
+        except:
+            pass
 
         # Check for collisions with locked door
         try:
@@ -1456,12 +1676,10 @@ class GameView(arcade.View):
                 if info["quest_item"] == "Apple":
                     quest_req_apples = True
                     quest_id_apples = id
-                    break
                 if info["quest_item"] == "Card":
                     quest_req_cards = True
                     quest_id_cards = id
                 if info["quest_item"] == "Document":
-                    print("Yes")
                     quest_req_documents = True
                     quest_id_documents = id
             
@@ -1489,6 +1707,17 @@ class GameView(arcade.View):
         for energy_bar in self.gui_scene[LAYER_NAME_ENERGY]:
             energy_bar.texture = arcade.load_texture(f"{MAIN_PATH}/assets/GUI/Energy/{self.energy}.png")
 
+        # Check for stabbing of enemy
+        try:
+            knife_collision_list = arcade.check_for_collision_with_list(self.scene[LAYER_NAME_KNIFE][0], self.scene[LAYER_NAME_ENEMIES])
+            for collision in knife_collision_list:
+                for id, info in self.inventory_quest.items():
+                    if collision.drop == info["name"]:
+                        self.inventory_quest[id]["number"] += 1
+                self.scene[LAYER_NAME_ENEMIES].remove(collision)
+        
+        except:
+            pass
 
         # Check for collisions with enemies
         try:
@@ -1511,14 +1740,6 @@ class GameView(arcade.View):
                 distance_to_player = calculate_distance([self.player_sprite.center_x, self.player_sprite.center_y], [tile.center_x, tile.center_y])
                 if distance_to_player < 10*TILE_SCALING*self.tile_map.tile_width:
                     tile.alpha = 255*(max(distance_to_player-5*TILE_SCALING*self.tile_map.tile_width, 0)) / (10*TILE_SCALING*self.tile_map.tile_width)
-        except:
-            pass
-
-        # Check for collision with goal/warp portal
-        try:
-            if len(arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_GOAL])) > 0:
-                self.level += 1
-                self.setup()
         except:
             pass
         
@@ -1563,6 +1784,11 @@ class GameView(arcade.View):
             self.missing_key_text -= delta_time
         else:
             self.missing_key_text = 0
+        
+        if self.secret_found_text > 0:
+            self.secret_found_text -= delta_time
+        else:
+            self.secret_found_text = 0
 
         # If these variables exist, i.e. after a quest has been started,
         # Run the timer code
