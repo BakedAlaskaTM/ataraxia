@@ -698,6 +698,10 @@ class GameView(arcade.View):
         self.map_has_locked_doors = False
         self.available_layers = []
 
+        # Reset player sprite
+        self.player_sprite = None
+        self.shape = 0
+
 
         # Layer specific options for Tilemap
         layer_options = {
@@ -738,6 +742,40 @@ class GameView(arcade.View):
         
         # Initialise new scene with the tilemap
         self.scene = arcade.Scene.from_tilemap(self.tile_map)
+
+        # Setup player at specific coordinates
+        self.player_sprite = PlayerCharacter(self.shape)
+        self.player_sprite.center_x = (
+            self.tile_map.tile_width * TILE_SCALING * self.spawnpoint[0]
+        )
+        self.player_sprite.center_y = (
+            self.tile_map.tile_height * TILE_SCALING * self.spawnpoint[1]
+        )
+
+        self.scene.add_sprite(LAYER_NAME_PLAYER, self.player_sprite)
+
+        if str(self.level) in ["1.1", "2.1"]:
+            arcade.set_background_color((99, 245, 255))
+        else:
+            arcade.set_background_color((0, 0, 0))
+
+        # Create the physics engine
+        try:
+            self.physics_engine = arcade.PhysicsEnginePlatformer(
+                self.player_sprite,
+                platforms=self.scene[LAYER_NAME_MOVING_PLATFORMS],
+                gravity_constant=GRAVITY,
+                ladders=self.scene[LAYER_NAME_LADDERS],
+                walls=[self.scene[LAYER_NAME_PLATFORMS], self.scene[LAYER_NAME_DOOR_BARRIERS_CLOSED]],
+            )
+        except:
+            self.physics_engine = arcade.PhysicsEnginePlatformer(
+                self.player_sprite,
+                platforms=self.scene[LAYER_NAME_MOVING_PLATFORMS],
+                gravity_constant=GRAVITY,
+                ladders=self.scene[LAYER_NAME_LADDERS],
+                walls=self.scene[LAYER_NAME_PLATFORMS],
+            )
 
         # Make a scene for the GUI
         self.gui_scene = arcade.Scene()
@@ -941,40 +979,6 @@ class GameView(arcade.View):
                 center_y=SCREEN_HEIGHT-TILE_SCALING*27,
             )
         )
-
-        # Setup player at specific coordinates
-        self.player_sprite = PlayerCharacter(self.shape)
-        self.player_sprite.center_x = (
-            self.tile_map.tile_width * TILE_SCALING * self.spawnpoint[0]
-        )
-        self.player_sprite.center_y = (
-            self.tile_map.tile_height * TILE_SCALING * self.spawnpoint[1]
-        )
-
-        self.scene.add_sprite(LAYER_NAME_PLAYER, self.player_sprite)
-
-        if str(self.level) == "1.1":
-            arcade.set_background_color((99, 245, 255))
-        else:
-            arcade.set_background_color((0, 0, 0))
-
-        # Create the physics engine
-        try:
-            self.physics_engine = arcade.PhysicsEnginePlatformer(
-                self.player_sprite,
-                platforms=self.scene[LAYER_NAME_MOVING_PLATFORMS],
-                gravity_constant=GRAVITY,
-                ladders=self.scene[LAYER_NAME_LADDERS],
-                walls=[self.scene[LAYER_NAME_PLATFORMS], self.scene[LAYER_NAME_DOOR_BARRIERS_CLOSED]],
-            )
-        except:
-            self.physics_engine = arcade.PhysicsEnginePlatformer(
-                self.player_sprite,
-                platforms=self.scene[LAYER_NAME_MOVING_PLATFORMS],
-                gravity_constant=GRAVITY,
-                ladders=self.scene[LAYER_NAME_LADDERS],
-                walls=self.scene[LAYER_NAME_PLATFORMS],
-            )
 
         if self.map_has_villagers:
             self.available_layers.append(LAYER_NAME_VILLAGERS)
@@ -1573,6 +1577,7 @@ class GameView(arcade.View):
                 self.spawnpoint = self.doors[interactable_door]["dest"]
                 self.interact = False
                 self.setup()
+                return
             else:
                 has_key = False
                 for item in self.inventory_other.values():
@@ -1584,18 +1589,9 @@ class GameView(arcade.View):
                     self.spawnpoint = self.doors[interactable_door]["dest"]
                     self.interact = False
                     self.setup()
+                    return
                 else:
                     self.missing_key_text = 2
-
-        # Check for collision with goal/warp portal
-        try:
-            player_collision_list = arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_GOAL])
-            for collision in player_collision_list:
-                self.level = collision.warp
-                self.spawnpoint = collision.dest
-                self.setup()
-        except:
-            pass
                             
         # Check if interaction possible with statue
         try:
@@ -1704,8 +1700,11 @@ class GameView(arcade.View):
 
 
         # Update energy bar
-        for energy_bar in self.gui_scene[LAYER_NAME_ENERGY]:
-            energy_bar.texture = arcade.load_texture(f"{MAIN_PATH}/assets/GUI/Energy/{self.energy}.png")
+        try:
+            for energy_bar in self.gui_scene[LAYER_NAME_ENERGY]:
+                energy_bar.texture = arcade.load_texture(f"{MAIN_PATH}/assets/GUI/Energy/{self.energy}.png")
+        except:
+            pass
 
         # Check for stabbing of enemy
         try:
@@ -1731,8 +1730,11 @@ class GameView(arcade.View):
             pass
 
         # Update health bar
-        for health_bar in self.gui_scene[LAYER_NAME_HEALTH]:
-            health_bar.texture = arcade.load_texture(f"{MAIN_PATH}/assets/GUI/Health/{self.health}.png")
+        try:
+            for health_bar in self.gui_scene[LAYER_NAME_HEALTH]:
+                health_bar.texture = arcade.load_texture(f"{MAIN_PATH}/assets/GUI/Health/{self.health}.png")
+        except:
+            pass
 
         # Reveal tunnels/cave when player approaches
         try:
@@ -1812,7 +1814,17 @@ class GameView(arcade.View):
   
         except:
             pass
-        
+
+        # Check for collision with goal/warp portal
+        try:
+            player_collision_list = arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_GOAL])
+            for collision in player_collision_list:
+                self.level = collision.warp
+                self.spawnpoint = collision.dest
+                self.setup()
+                return
+        except:
+            pass
         self.center_camera_to_player()
 
 # Main Program

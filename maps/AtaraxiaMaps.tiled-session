@@ -129,12 +129,12 @@
     "last.exportedFilePath": "//wbfp02.westlake.local/shomes/ds21616/Documents/13DTP/Assessment/91906 - DevinShen/maps",
     "last.imagePath": "D:/Devin stuff/13DTP/Assessment/91906---DevinShen/assets/Tiles/Interior",
     "map.fixedSize": true,
-    "map.height": 20,
+    "map.height": 60,
     "map.lastUsedExportFilter": "All Files (*)",
     "map.lastUsedFormat": "tmx",
     "map.tileHeight": 16,
     "map.tileWidth": 16,
-    "map.width": 20,
+    "map.width": 100,
     "openFiles": [
         "0.tmx",
         "Testing Tiles.tsx",
@@ -143,6 +143,7 @@
     "project": "AtaraxiaMaps.tiled-project",
     "property.type": "int",
     "recentFiles": [
+        "2.1.tmx",
         "1.4.tmx",
         "1.1.tmx",
         "0.tmx",
