@@ -11,9 +11,9 @@
     "fileStates": {
         "0.tmx": {
             "expandedObjectLayers": [
-                12,
                 11,
-                10
+                10,
+                12
             ],
             "scale": 1,
             "selectedLayer": 7,
@@ -24,18 +24,19 @@
         },
         "1.1.tmx": {
             "expandedObjectLayers": [
+                19,
                 21,
                 5,
-                14,
-                17,
                 6,
-                19
+                10,
+                14,
+                17
             ],
-            "scale": 2,
-            "selectedLayer": 16,
+            "scale": 1,
+            "selectedLayer": 13,
             "viewCenter": {
-                "x": 4383.5,
-                "y": 1398
+                "x": 2538,
+                "y": 1408
             }
         },
         "1.2.tmx": {
@@ -66,11 +67,11 @@
         "1.4.tmx": {
             "expandedObjectLayers": [
                 5,
-                13,
-                6
+                6,
+                13
             ],
             "scale": 4,
-            "selectedLayer": 6,
+            "selectedLayer": 13,
             "viewCenter": {
                 "x": 192.25,
                 "y": 223.75
@@ -80,16 +81,25 @@
             "scale": 0.4769,
             "selectedLayer": 8,
             "viewCenter": {
-                "x": 891.1721534912979,
-                "y": 381.631369259803
+                "x": 891.172153491298,
+                "y": 383.7282449150765
             }
         },
         "2.1.tmx": {
-            "scale": 0.75,
-            "selectedLayer": 1,
+            "expandedObjectLayers": [
+                21,
+                9,
+                13,
+                12,
+                15,
+                14,
+                17
+            ],
+            "scale": 1,
+            "selectedLayer": 5,
             "viewCenter": {
-                "x": 88,
-                "y": 1297.3333333333333
+                "x": 1396,
+                "y": 476
             }
         },
         "Backdrops.tsx": {
@@ -127,7 +137,7 @@
         }
     },
     "last.exportedFilePath": "//wbfp02.westlake.local/shomes/ds21616/Documents/13DTP/Assessment/91906 - DevinShen/maps",
-    "last.imagePath": "D:/Devin stuff/13DTP/Assessment/91906---DevinShen/assets/Tiles/Interior",
+    "last.imagePath": "//wbfp02.westlake.local/shomes/ds21616/Documents/13DTP/Assessment/91906 - DevinShen/assets/Tiles/Testing",
     "map.fixedSize": true,
     "map.height": 60,
     "map.lastUsedExportFilter": "All Files (*)",
@@ -141,13 +151,13 @@
         "1.tmx"
     ],
     "project": "AtaraxiaMaps.tiled-project",
-    "property.type": "int",
+    "property.type": "string",
     "recentFiles": [
+        "1.tmx",
         "2.1.tmx",
         "1.4.tmx",
         "1.1.tmx",
         "0.tmx",
-        "1.tmx",
         "Testing Tiles.tsx",
         "testmap.tmj"
     ],

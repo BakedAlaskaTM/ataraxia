@@ -97,6 +97,14 @@ QUEST_REF = {
         "reward_item": "Church Key",
         "reward_num": 1
     },
+    "100": {
+        "dialogue": "Help, I've lost my helmet. Get it for me so I can keep mining and I'll give you a key.",
+        "dialogue_time": 5,
+        "item": "Helmet",
+        "number": 1,
+        "reward_item": "Cave Key",
+        "reward_num": 1
+    }
 }
 
 # Loading mirrored sprites
@@ -256,7 +264,7 @@ class Orb(Collectible):
         self.cur_texture += 1
         if self.cur_texture > 23:
             self.cur_texture = 0
-        self.texture = self.idle_textures[self.cur_texture // 12][0]
+        self.texture = self.idle_textures[self.cur_texture // 12][RIGHT_FACING]
         return
 
 # Apple class
@@ -267,7 +275,7 @@ class Apple(Collectible):
         # Inherit from parent class (Collectible)    
         super().__init__("Apple")
         self.type = None
-        self.texture = self.idle_textures[0][0]
+        self.texture = self.idle_textures[0][RIGHT_FACING]
 
 # Lost card class
 class Card(Collectible):
@@ -277,7 +285,7 @@ class Card(Collectible):
         # Inherit from parent class (Collectible)
         super().__init__("Card")
         self.type = None
-        self.texture = self.idle_textures[0][0]
+        self.texture = self.idle_textures[0][RIGHT_FACING]
 
 # Lost document class
 class Document(Collectible):
@@ -286,7 +294,7 @@ class Document(Collectible):
     def __init__(self):
         super().__init__("Document")
         self.type = None
-        self.texture = self.idle_textures[0][0]
+        self.texture = self.idle_textures[0][RIGHT_FACING]
     
 # Key class
 class Key(Collectible):
@@ -297,7 +305,16 @@ class Key(Collectible):
         super().__init__("Key")
         self.type = None
         self.id = None
-        self.texture = self.idle_textures[0][0]
+        self.texture = self.idle_textures[0][RIGHT_FACING]
+
+# Lost helmet class
+class Helmet(Collectible):
+    """Quest collectible helmet sprite"""
+    def __init__(self):
+        # Inherit from parent class (Collectible)
+        super().__init__("Helmet")
+        self.type = None
+        self.texture = self.idle_textures[0][RIGHT_FACING]
 
 # Secrets sprite classes
 # Secret statuette class
@@ -614,12 +631,14 @@ class GameView(arcade.View):
             "000": {"name": "Apples", "number": 0},
             "001": {"name": "Cards", "number": 0},
             "002": {"name": "Documents", "number": 0},
-            "003": {"name": "Ectoplasm", "number": 0}
+            "003": {"name": "Ectoplasm", "number": 0},
+            "100": {"name": "Helmet", "number": 0},
         }
 
         self.inventory_other = {
             "002": {"name": "Knife", "type": "Weapon", "number": 0},
-            "003": {"name": "Church Key", "type": "Key", "number": 0}
+            "003": {"name": "Church Key", "type": "Key", "number": 0},
+            "100": {"name": "Cave Key", "type": "Key", "number": 0}
         }
         self.keys_obtained = []
         self.secrets_found = []
@@ -637,6 +656,7 @@ class GameView(arcade.View):
         # Sensing variables
         self.can_interact = False
         self.is_flying = False
+        self.interactable_door = None
        
 
         # Control variables
@@ -674,7 +694,7 @@ class GameView(arcade.View):
         self.gui_camera = None
 
         # Level setup
-        self.level = 1.1
+        self.level = 2.1
 
         # Primary camera for scrolling the screen
         self.camera = None
@@ -697,6 +717,10 @@ class GameView(arcade.View):
         self.map_has_enemies = False
         self.map_has_locked_doors = False
         self.available_layers = []
+        self.text_layer = None
+
+        # Update sensing variables
+        self.interactable_door = None
 
         # Reset player sprite
         self.player_sprite = None
@@ -754,8 +778,10 @@ class GameView(arcade.View):
 
         self.scene.add_sprite(LAYER_NAME_PLAYER, self.player_sprite)
 
-        if str(self.level) in ["1.1", "2.1"]:
+        if str(self.level) in ["1.1", "3.1"]:
             arcade.set_background_color((99, 245, 255))
+        elif str(self.level) in ["2.1"]:
+            arcade.set_background_color((0, 0, 0))
         else:
             arcade.set_background_color((0, 0, 0))
 
@@ -892,6 +918,8 @@ class GameView(arcade.View):
                 if collectible_type == "Key":
                     collectible = Key()
                     collectible.id = collectible_object.properties["unlocks"]
+                if collectible_type == "Helmet":
+                    collectible = Helmet()
                 if collectible_type == "Secret":
                     collectible_name = collectible_object.properties["name"]
                     if collectible_name == "Statuette":
@@ -1187,23 +1215,40 @@ class GameView(arcade.View):
         """
         # Process up/down
         if self.up_pressed and not self.down_pressed:
-            if self.physics_engine.is_on_ladder():
-                self.player_sprite.change_y = PLAYER_WALK_SPEED
-            elif self.shape == 2:
-                self.fly_speed += (self.thrust - GRAVITY)*self.delta_time
+            if self.running:
+                if self.physics_engine.is_on_ladder():
+                    self.player_sprite.change_y = PLAYER_WALK_SPEED
+                elif self.shape == 2:
+                    self.fly_speed += (self.thrust - GRAVITY)*self.delta_time
+                else:
+                    if (
+                        self.physics_engine.can_jump(y_distance=10)
+                        and not self.jump_needs_reset
+                    ):
+                        self.player_sprite.change_y = PLAYER_JUMP_SPEED
+                        self.jump_needs_reset = True
+                    elif self.down_pressed and not self.up_pressed:
+                        if self.physics_engine.is_on_ladder():
+                            self.player_sprite.change_y = -PLAYER_WALK_SPEED
+                        elif self.shape == 2:
+                            self.fly_speed -= (self.thrust + 4*GRAVITY)*self.delta_time
             else:
-                if (
-                    self.physics_engine.can_jump(y_distance=10)
-                    and not self.jump_needs_reset
-                ):
-                    self.player_sprite.change_y = PLAYER_JUMP_SPEED
-                    self.jump_needs_reset = True
-        elif self.down_pressed and not self.up_pressed:
-            if self.physics_engine.is_on_ladder():
-                self.player_sprite.change_y = -PLAYER_WALK_SPEED
-            elif self.shape == 2:
-                self.fly_speed -= (self.thrust + 4*GRAVITY)*self.delta_time
-
+                if self.physics_engine.is_on_ladder():
+                    self.player_sprite.change_y = PLAYER_WALK_SPEED
+                elif self.shape == 2:
+                    self.fly_speed += (self.thrust - GRAVITY)*self.delta_time
+                else:
+                    if (
+                        self.physics_engine.can_jump(y_distance=10)
+                        and not self.jump_needs_reset
+                    ):
+                        self.player_sprite.change_y = PLAYER_JUMP_SPEED
+                        self.jump_needs_reset = True
+                    elif self.down_pressed and not self.up_pressed:
+                        if self.physics_engine.is_on_ladder():
+                            self.player_sprite.change_y = -PLAYER_WALK_SPEED
+                        elif self.shape == 2:
+                            self.fly_speed -= (self.thrust + 4*GRAVITY)*self.delta_time
         # Process up/down when on a ladder and no movement
         if self.physics_engine.is_on_ladder():
             if not self.up_pressed and not self.down_pressed:
@@ -1564,29 +1609,29 @@ class GameView(arcade.View):
         # Check if interaction possible with door
         for id, info in self.doors.items():
             if calculate_distance(self.player_sprite.position, info["pos"]) < 1*TILE_SCALING*self.tile_map.tile_width:
-                interactable_door = id
+                self.interactable_door = id
                 self.can_interact = True
                 break
-            interactable_door = None
+            self.interactable_door = None
         
         # Level changing mechanics
         # Check if actually interacting with door
-        if self.interact and self.can_interact and interactable_door != None:
-            if self.doors[interactable_door]["key_req"] == "None":
-                self.level = self.doors[interactable_door]["warp"]
-                self.spawnpoint = self.doors[interactable_door]["dest"]
+        if self.interact and self.can_interact and self.interactable_door != None:
+            if self.doors[self.interactable_door]["key_req"] == "None":
+                self.level = self.doors[self.interactable_door]["warp"]
+                self.spawnpoint = self.doors[self.interactable_door]["dest"]
                 self.interact = False
                 self.setup()
                 return
             else:
                 has_key = False
                 for item in self.inventory_other.values():
-                    if item["name"] == self.doors[interactable_door]["key_req"] and item["number"] > 0:
+                    if item["name"] == self.doors[self.interactable_door]["key_req"] and item["number"] > 0:
                         has_key = True
                         break
                 if has_key:
-                    self.level = self.doors[interactable_door]["warp"]
-                    self.spawnpoint = self.doors[interactable_door]["dest"]
+                    self.level = self.doors[self.interactable_door]["warp"]
+                    self.spawnpoint = self.doors[self.interactable_door]["dest"]
                     self.interact = False
                     self.setup()
                     return
@@ -1668,6 +1713,7 @@ class GameView(arcade.View):
             quest_req_apples = False
             quest_req_cards = False
             quest_req_documents = False
+            quest_req_helmets = False
             for id, info in self.quests.items():
                 if info["quest_item"] == "Apple":
                     quest_req_apples = True
@@ -1678,6 +1724,9 @@ class GameView(arcade.View):
                 if info["quest_item"] == "Document":
                     quest_req_documents = True
                     quest_id_documents = id
+                if info["quest_item"] == "Helmet":
+                    quest_req_helmets = True
+                    quest_id_helmets = id
             
             
             player_collision_list = arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_COLLECTIBLES])
@@ -1696,6 +1745,11 @@ class GameView(arcade.View):
                     # Check for collisions with documents
                     if collision.type == "Document":
                         self.inventory_quest[quest_id_documents]["number"] += 1
+                        self.scene[LAYER_NAME_COLLECTIBLES].remove(collision)
+                if quest_req_helmets:
+                    # Check for collisions with helmets
+                    if collision.type == "Helmet":
+                        self.inventory_quest[quest_id_helmets]["number"] += 1
                         self.scene[LAYER_NAME_COLLECTIBLES].remove(collision)
 
 
