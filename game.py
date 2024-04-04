@@ -5,8 +5,8 @@ import arcade, os, random, math
 MAIN_PATH = os.path.dirname(os.path.abspath(__file__))
 
 # Window Settings
-SCREEN_WIDTH = 1920
-SCREEN_HEIGHT = 1080
+SCREEN_WIDTH = 1280
+SCREEN_HEIGHT = 720
 SCREEN_TITLE = "Ataraxia V1"
 
 # Sprite Scaling
@@ -1802,14 +1802,16 @@ class GameView(arcade.View):
         # Check for collision with death layer (spikes etc)
         try:
             if len(arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_DEATH])) > 0:
-                self.player_sprite.center_x = self.tile_map.tile_width * TILE_SCALING * self.spawnpoint[0]
-                self.player_sprite.center_y = self.tile_map.tile_height * TILE_SCALING * self.spawnpoint[1]
+                self.health = 3
+                self.energy = 3
+                self.is_dead = True
         except:
             pass
         
         # Run player death animation
         if self.player_sprite.center_y < 0 or self.health <= 0:
             self.health = 3
+            self.energy = 3
             self.player_sprite.is_dead = True
             
         
