@@ -11,42 +11,41 @@
     "fileStates": {
         "0.tmx": {
             "expandedObjectLayers": [
-                12,
                 11,
-                10
+                10,
+                12
             ],
             "scale": 1,
             "selectedLayer": 7,
             "viewCenter": {
-                "x": 504,
-                "y": 78
+                "x": 712.5,
+                "y": 140.5
             }
         },
         "1.1.tmx": {
             "expandedObjectLayers": [
+                19,
                 21,
                 5,
-                14,
-                17,
                 6,
                 10,
-                19
+                14,
+                17
             ],
             "scale": 1,
-            "selectedLayer": 12,
+            "selectedLayer": 13,
             "viewCenter": {
-                "x": 4962,
-                "y": 1413
+                "x": 2538,
+                "y": 1408
             }
         },
         "1.2.tmx": {
             "expandedObjectLayers": [
                 5,
-                13,
-                6
+                13
             ],
             "scale": 3.7406249999999996,
-            "selectedLayer": 6,
+            "selectedLayer": 13,
             "viewCenter": {
                 "x": 160.1336675020886,
                 "y": 160.13366750208857
@@ -61,93 +60,46 @@
             "scale": 5.5,
             "selectedLayer": 11,
             "viewCenter": {
-                "x": 201.09090909090912,
-                "y": 84.54545454545455
+                "x": 193.09090909090912,
+                "y": 220.1818181818182
             }
         },
         "1.4.tmx": {
             "expandedObjectLayers": [
                 5,
-                13,
-                6
+                6,
+                13
             ],
             "scale": 4,
-            "selectedLayer": 6,
+            "selectedLayer": 13,
             "viewCenter": {
-                "x": 191.75,
-                "y": 223.25
+                "x": 192.25,
+                "y": 223.75
             }
         },
         "1.tmx": {
             "scale": 0.4769,
             "selectedLayer": 8,
             "viewCenter": {
-                "x": 891.1721534912979,
-                "y": 381.631369259803
+                "x": 894.3174669742084,
+                "y": 384.7766827427134
             }
         },
         "2.1.tmx": {
             "expandedObjectLayers": [
-                14,
-                13,
+                17,
+                12,
                 15,
-                9
-            ],
-            "scale": 0.75,
-            "selectedLayer": 5,
-            "viewCenter": {
-                "x": 1114.6666666666665,
-                "y": 386.66666666666663
-            }
-        },
-        "2.2.tmx": {
-            "expandedObjectLayers": [
-                6,
-                10
+                13,
+                14,
+                9,
+                21
             ],
             "scale": 3,
-            "selectedLayer": 11,
+            "selectedLayer": 4,
             "viewCenter": {
-                "x": 183.33333333333337,
-                "y": 178.99999999999997
-            }
-        },
-        "3.1.tmx": {
-            "expandedObjectLayers": [
-                12,
-                13,
-                15,
-                20,
-                10
-            ],
-            "scale": 0.33,
-            "selectedLayer": 17,
-            "viewCenter": {
-                "x": 2148.4848484848485,
-                "y": 315.15151515151524
-            }
-        },
-        "3.2.tmx": {
-            "expandedObjectLayers": [
-                10
-            ],
-            "scale": 8,
-            "selectedLayer": 11,
-            "viewCenter": {
-                "x": 95.75,
-                "y": 51.625
-            }
-        },
-        "3.3.tmx": {
-            "expandedObjectLayers": [
-                6,
-                10
-            ],
-            "scale": 5.5,
-            "selectedLayer": 11,
-            "viewCenter": {
-                "x": 105.63636363636363,
-                "y": 64.36363636363637
+                "x": 1131.8333333333333,
+                "y": 600.5
             }
         },
         "Backdrops.tsx": {
@@ -201,11 +153,11 @@
     "project": "AtaraxiaMaps.tiled-project",
     "property.type": "int",
     "recentFiles": [
-        "0.tmx",
+        "2.1.tmx",
         "1.tmx",
         "1.4.tmx",
-        "2.1.tmx",
         "1.1.tmx",
+        "0.tmx",
         "Testing Tiles.tsx",
         "testmap.tmj"
     ],
