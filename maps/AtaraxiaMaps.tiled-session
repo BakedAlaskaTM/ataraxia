@@ -32,11 +32,11 @@
                 10,
                 19
             ],
-            "scale": 2,
-            "selectedLayer": 16,
+            "scale": 1,
+            "selectedLayer": 12,
             "viewCenter": {
-                "x": 4428.5,
-                "y": 1396.5
+                "x": 4962,
+                "y": 1413
             }
         },
         "1.2.tmx": {
@@ -123,8 +123,8 @@
             "scale": 0.33,
             "selectedLayer": 17,
             "viewCenter": {
-                "x": 2151.5151515151515,
-                "y": 318.18181818181824
+                "x": 2148.4848484848485,
+                "y": 315.15151515151524
             }
         },
         "3.2.tmx": {
@@ -201,11 +201,11 @@
     "project": "AtaraxiaMaps.tiled-project",
     "property.type": "int",
     "recentFiles": [
+        "0.tmx",
+        "1.tmx",
         "1.4.tmx",
         "2.1.tmx",
         "1.1.tmx",
-        "0.tmx",
-        "1.tmx",
         "Testing Tiles.tsx",
         "testmap.tmj"
     ],

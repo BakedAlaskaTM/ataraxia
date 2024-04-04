@@ -19,6 +19,44 @@ KNIFE_SCALING = 3
 RIGHT_FACING = 0
 LEFT_FACING = 1
 
+# Sprite animation multipliers
+# These determine how many frames it takes to update texture once.
+ANIM_MULT = {
+    "Player1": {
+        "Idle": 8,
+        "Walk": 4,
+        "Climb": 4,
+        "Death": 6
+    },
+    "Player2": {
+        "Idle": 8,
+        "Walk": 4,
+        "Death": 6
+    },
+    "Player3": {
+        "Idle": 4,
+        "Walk": 4,
+        "Jump": 4,
+        "Fall": 4,
+        "Death": 6
+    },
+    "Orb": {
+        "Idle": 12,
+    },
+    "Enemy": {
+        "Walk": 2
+    },
+    "Knife": {
+        "Idle": 3
+    }
+}
+
+# Miscellaneous Constants
+FIRST_TEXTURE = 0
+UNIT_INCREMENT = 1
+INDEX_OFFSET = 1
+FRAMERATE = 1 / 60
+
 # Layer names
 # Character Layers
 LAYER_NAME_PLAYER = "Player"
@@ -60,6 +98,14 @@ PLAYER_JUMP_SPEED = 20
 PLAYER_START_X = 3
 PLAYER_START_Y = 18
 
+# Player characteristics
+PLAYER_SHAPE_HUMAN = 0
+PLAYER_SHAPE_DOG = 1
+PLAYER_SHAPE_BLAZE = 2
+
+# Kinematic constants
+STATIONARY = 0
+START_CLIMB = 1
 
 # Timing constants
 KNIFE_COOLDOWN = 0.5
@@ -130,6 +176,7 @@ def load_texture_pair(filename):
     ]
 
 def calculate_distance(pos_1, pos_2):
+    """Returns distance between two positions"""
     distance_x = pos_1[0] - pos_2[0]
     distance_y = pos_1[1] - pos_2[1]
     return math.sqrt(distance_x**2 + distance_y**2)
@@ -140,23 +187,29 @@ class Entity(arcade.Sprite):
     """Overarching things for characters"""
 
     def __init__(self, category_folder, sprite_folder, available_anims: list):
+        """
+        Initialises all of the texture lists relevant to the entity.
+        Default texture is the first idle texture.
+        """
+        # Inherit from parent class (arcade.Sprite)
         super().__init__()
 
         # Default right facing
         self.facing_direction = RIGHT_FACING
 
         # Image sequences
-        self.cur_texture = 0
+        self.cur_texture = FIRST_TEXTURE
         self.scale = CHARACTER_SCALING
 
         main_path = f"{MAIN_PATH}/assets/{category_folder}/{sprite_folder}"
 
         if "Idle" in available_anims:
             # Idle frames
-            frame_num = 0
+            frame_num = FIRST_TEXTURE
             for path in os.listdir(f"{main_path}/idle"):
-                frame_num += 1
+                frame_num += UNIT_INCREMENT
 
+            self.idle_frames = frame_num
             self.idle_textures = []
             for i in range(frame_num):
                 texture = load_texture_pair(f"{main_path}/idle/{i}.png")
@@ -164,19 +217,21 @@ class Entity(arcade.Sprite):
 
         if "Jump" in available_anims:
             # Jumping and falling sprites
-            frame_num = 0
+            frame_num = FIRST_TEXTURE
             for path in os.listdir(f"{main_path}/jump"):
-                frame_num += 1
+                frame_num += UNIT_INCREMENT
 
+            self.jump_frames = frame_num
             self.jump_textures = []
             for i in range(frame_num):
                 texture = load_texture_pair(f"{main_path}/jump/{i}.png")
                 self.jump_textures.append(texture)
 
-            frame_num = 0
+            frame_num = FIRST_TEXTURE
             for path in os.listdir(f"{main_path}/fall"):
-                frame_num += 1
+                frame_num += UNIT_INCREMENT
 
+            self.fall_frames = frame_num
             self.fall_textures = []
             for i in range(frame_num):
                 texture = load_texture_pair(f"{main_path}/fall/{i}.png")
@@ -184,99 +239,119 @@ class Entity(arcade.Sprite):
 
         if "Walk" in available_anims:
             # Walking frames
-            frame_num = 0
+            frame_num = FIRST_TEXTURE
             for path in os.listdir(f"{main_path}/walk"):
-                frame_num += 1
+                frame_num += UNIT_INCREMENT
 
+            self.walk_frames = frame_num
             self.walk_textures = []
             for i in range(frame_num):
                 texture = load_texture_pair(f"{main_path}/walk/{i}.png")
                 self.walk_textures.append(texture)
 
         if "Climb" in available_anims:
-        # Climbing frames
-            frame_num = 0
+            # Climbing frames
+            frame_num = FIRST_TEXTURE
             for path in os.listdir(f"{main_path}/climb"):    
-                frame_num += 1
+                frame_num += UNIT_INCREMENT
 
-
+            self.climbing_frames = frame_num
             self.climbing_textures = []
             for i in range(frame_num):
                 texture = load_texture_pair(f"{main_path}/climb/{i}.png")
                 self.climbing_textures.append(texture)
 
         if "Wave" in available_anims:
-            frame_num = 0
+            frame_num = FIRST_TEXTURE
             for path in os.listdir(f"{main_path}/wave"):
-                frame_num += 1
+                frame_num += UNIT_INCREMENT
 
+            self.wave_frames = frame_num
             self.wave_textures = []
             for i in range(frame_num):
                 texture = load_texture_pair(f"{main_path}/wave/{i}.png")
                 self.wave_textures.append(texture)
 
         if "Death" in available_anims:
-            frame_num = 0
+            frame_num = FIRST_TEXTURE
             for path in os.listdir(f"{main_path}/death"):
-                frame_num += 1
+                frame_num += UNIT_INCREMENT
             
+            self.death_frames = frame_num
             self.death_textures = []
             for i in range(frame_num):
                 texture = load_texture_pair(f"{main_path}/death/{i}.png")
                 self.death_textures.append(texture)
         
         if "Open" in available_anims:
-            frame_num = 0
+            frame_num = FIRST_TEXTURE
             for path in os.listdir(f"{main_path}/open"):
-                frame_num += 1
+                frame_num += UNIT_INCREMENT
             
+            self.open_frames = frame_num
             self.open_textures = []
             for i in range(frame_num):
                 texture = load_texture_pair(f"{main_path}/open/{i}.png")
                 self.open_textures.append(texture)
         
         if "Closed" in available_anims:
-            frame_num = 0
+            frame_num = FIRST_TEXTURE
             for path in os.listdir(f"{main_path}/closed"):
-                frame_num += 1
+                frame_num += UNIT_INCREMENT
             
+            self.closed_frames = frame_num
             self.closed_textures = []
             for i in range(frame_num):
                 texture = load_texture_pair(f"{main_path}/closed/{i}.png")
                 self.closed_textures.append(texture)
             
         # Set initial texture
-        self.texture = self.idle_textures[0][0]
+        self.texture = self.idle_textures[FIRST_TEXTURE][RIGHT_FACING]
 
         # Set hitbox
         self.set_hit_box(self.texture.hit_box_points)
 
 # Collectible Objects Template class
-
 class Collectible(Entity):
-    """Template for collectible items like orbs and potions and
-weapons and stuff."""
+    """
+    Template for collectible items like orbs,
+    quest collectibles, and secrets.
+    """
     def __init__(self, sprite_folder):
+        """
+        Initialises the relevant animations/textures which are
+        the idle textures for collectibles.
+        Sets the scaling of the sprites to COLLECTIBLE_SCALING.
+        """
         # Inherit from parent class (Entity)
         super().__init__("InanimateObjects", sprite_folder, ["Idle"])
         self.scale = COLLECTIBLE_SCALING
 
 
 # Energy Orb class
-
 class Orb(Collectible):
     """Energy Orb Sprite"""
 
     def __init__(self):
+        """
+        Loads the specific EnergyOrb textures from the sprite folder
+        in assets. Initialises the type attribute and sets it to None.
+        """
         # Inherit from parent class (Collectible)
         super().__init__("EnergyOrb")
         self.type = None
 
-    def update_animation(self, delta_time: float = 1 / 60):
-        self.cur_texture += 1
-        if self.cur_texture > 23:
-            self.cur_texture = 0
-        self.texture = self.idle_textures[self.cur_texture // 12][RIGHT_FACING]
+    def update_animation(self, delta_time: float = FRAMERATE):
+        self.cur_texture += UNIT_INCREMENT
+        if (
+            self.cur_texture 
+            > 
+            self.idle_frames*ANIM_MULT["Orb"]["Idle"]-INDEX_OFFSET
+            ):
+            self.cur_texture = FIRST_TEXTURE
+        self.texture = self.idle_textures[
+            self.cur_texture // ANIM_MULT["Orb"]["Idle"]
+            ][RIGHT_FACING]
         return
 
 # Apple class
@@ -284,98 +359,165 @@ class Apple(Collectible):
     """Apple collectible sprite"""
 
     def __init__(self):
+        """
+        Initialises the apple texture and type attribute.
+        The type attribute identifies the sprite during collisions.
+        """
         # Inherit from parent class (Collectible)    
         super().__init__("Apple")
         self.type = None
-        self.texture = self.idle_textures[0][RIGHT_FACING]
+        self.texture = self.idle_textures[FIRST_TEXTURE][RIGHT_FACING]
 
 # Lost card class
 class Card(Collectible):
     """Card collectible sprite"""
 
     def __init__(self):
+        """
+        Initialises the card texture and type attribute.
+        The type attribute identifies the sprite during collisions.
+        """
         # Inherit from parent class (Collectible)
         super().__init__("Card")
         self.type = None
-        self.texture = self.idle_textures[0][RIGHT_FACING]
+        self.texture = self.idle_textures[FIRST_TEXTURE][RIGHT_FACING]
 
 # Lost document class
 class Document(Collectible):
     """Document collectible sprite"""
 
     def __init__(self):
+        """
+        Initialises the document texture and type attribute.
+        The type attribute identifies the sprite during collisions.
+        """
+        # Inherit from parent class (Collectible)
         super().__init__("Document")
         self.type = None
-        self.texture = self.idle_textures[0][RIGHT_FACING]
-    
-# Key class
-class Key(Collectible):
-    """Collectible key sprite"""
-
-    def __init__(self):
-        # Inherit from parent class (Collectible)
-        super().__init__("Key")
-        self.type = None
-        self.id = None
-        self.texture = self.idle_textures[0][RIGHT_FACING]
+        self.texture = self.idle_textures[FIRST_TEXTURE][RIGHT_FACING]
 
 # Lost helmet class
 class Helmet(Collectible):
     """Quest collectible helmet sprite"""
     def __init__(self):
+        """
+        Initialises the helmet texture and type attribute.
+        The type attribute identifies the sprite during collisions.
+        """
         # Inherit from parent class (Collectible)
         super().__init__("Helmet")
         self.type = None
-        self.texture = self.idle_textures[0][RIGHT_FACING]
+        self.texture = self.idle_textures[FIRST_TEXTURE][RIGHT_FACING]
 
 # Rainbow Rock class
 class RainbowRock(Collectible):
     """Quest collectible rainbow rock"""
     def __init__(self):
+        """
+        Initialises the rainbow rock texture and type attribute.
+        The type attribute identifies the sprite during collisions.
+        """
         # Inherit from parent class (Collectible)
         super().__init__("RainbowRock")
         self.type = None
-        self.texture = self.idle_textures[0][RIGHT_FACING]
+        self.texture = self.idle_textures[FIRST_TEXTURE][RIGHT_FACING]
+
+# Key class
+class Key(Collectible):
+    """Collectible key sprite"""
+
+    def __init__(self):
+        """
+        Initialises the key texture, type attribute, and id attribute.
+        The type attribute identifies the sprite during collisions.
+        The id attribute determines which doors can be opened with
+        the key.
+        """
+        # Inherit from parent class (Collectible)
+        super().__init__("Key")
+        self.type = None
+        self.id = None
+        self.texture = self.idle_textures[FIRST_TEXTURE][RIGHT_FACING]
 
 # Secrets sprite classes
 # Constructor for secret statuette texture
 class Statuette(Collectible):
     """Sprite for statuette (secret)"""
     def __init__(self):
+        """
+        Initialises the statuette texture and type and name attributes.
+        The type attribute identifies the sprite during collisions.
+        The name attribute differentiates the secrets.
+        """
+
+        # Inherit from parent class (Collectible)
         super().__init__("Statuette")
         self.type = None
-        self.texture = self.idle_textures[0][RIGHT_FACING]
+        self.name = None
+        self.texture = self.idle_textures[FIRST_TEXTURE][RIGHT_FACING]
 
 # Constructor for secret diamond pickaaxe texture
 class DiamondPickaxe(Collectible):
     """Sprite for diamond pickaxe (secret)"""
     def __init__(self):
+        """
+        Initialises the pickaxe texture and type and name attributes.
+        The type attribute identifies the sprite during collisions.
+        The name attribute differentiates the secrets.
+        """
+
+        # Inherit from parent class (Collectible)
         super().__init__("DiamondPickaxe")
         self.type = None
-        self.texture = self.idle_textures[0][RIGHT_FACING]
+        self.name = None
+        self.texture = self.idle_textures[FIRST_TEXTURE][RIGHT_FACING]
 
 # Constructor for secret diamond ore texture
 class Diamond(Collectible):
     """Sprite for diamond (secret)"""
     def __init__(self):
+        """
+        Initialises the diamond texture and type and name attributes.
+        The type attribute identifies the sprite during collisions.
+        The name attribute differentiates the secrets.
+        """
+
+        # Inherit from parent class (Collectible)
         super().__init__("Diamond")
         self.type = None
-        self.texture = self.idle_textures[0][RIGHT_FACING]
+        self.name = None
+        self.texture = self.idle_textures[FIRST_TEXTURE][RIGHT_FACING]
 
 # Constructor for secret totem texture
 class Totem(Collectible):
     """Sprite for totem (secret)"""
     def __init__(self):
+        """
+        Initialises the totem texture and type and name attributes.
+        The type attribute identifies the sprite during collisions.
+        The name attribute differentiates the secrets.
+        """
+
+        # Inherit from parent class (Collectible)
         super().__init__("Totem")
         self.type = None
-        self.texture = self.idle_textures[0][RIGHT_FACING]
+        self.name = None
+        self.texture = self.idle_textures[FIRST_TEXTURE][RIGHT_FACING]
 
 # Class for the level end portal sprite
 class GoalPortal(Entity):
     """Sprite for next level portal"""
     def __init__(self):
+        """
+        Initialises the end portal texture.
+        Also initialises the warp and dest attributes.
+        Warp determines which level to setup,
+        and dest determines the spawnpoint of the player.
+        """
+
+        # Inherit from parent class (Entity)
         super().__init__("InanimateObjects", "GoalPortal", ["Idle"])
-        self.texture = self.idle_textures[0][RIGHT_FACING]
+        self.texture = self.idle_textures[FIRST_TEXTURE][RIGHT_FACING]
         self.warp = None
         self.dest = None
 
@@ -384,52 +526,103 @@ class LockedDoor(Entity):
     """Display entity for locked doors"""
 
     def __init__(self):
+        """
+        Initialises the locked door textures.
+        Also initialises the id and open attributes.
+        Id determines which key can open it,
+        and open determines whether the player can pass through or not.
+        """
+
         # Inherit from parent class (Entity)
-        
         super().__init__("InanimateObjects", "LockedDoor", ["Idle", "Open", "Closed"])
         self.id = None        
         self.open = False
-        self.texture = self.closed_textures[0][RIGHT_FACING]
+        self.texture = self.closed_textures[FIRST_TEXTURE][RIGHT_FACING]
         
 
-    def update_animation(self, delta_time: float = 1 / 60):
+    def update_animation(self, delta_time: float = FRAMERATE):
+        """
+        Procedure which updates the door texture.
+        Texture can switch from closed to open depending on the parity
+        of the open attribute.
+        """
         if self.open == False:
-            self.texture = self.closed_textures[0][RIGHT_FACING]
+            self.texture = self.closed_textures[FIRST_TEXTURE][RIGHT_FACING]
         else:
-            self.texture = self.open_textures[0][RIGHT_FACING]
+            self.texture = self.open_textures[FIRST_TEXTURE][RIGHT_FACING]
 
 # Knife class
 class Knife(Entity):
     """Display knife when swung"""
 
     def __init__(self):
+        """
+        Initialises the knife textures.
+        Also initialises the cur_texture and swing_finished attributes.
+        Cur_texture determines the current texture to display,
+        and swing_finished tells the program to whether to delete
+        the knife after swinging.
+        The scale factor of the texture is set to KNIFE_SCALING.
+        """
+
         # Inherit from parent class (Entity)
         super().__init__("InanimateObjects", "Knife", ["Idle"])
-        self.cur_texture = 0
+        self.cur_texture = FIRST_TEXTURE
         self.swing_finished = False
         self.scale = KNIFE_SCALING
     
-    def update_animation(self, delta_time: float = 1 / 60):
+    def update_animation(self, delta_time: float = FRAMERATE):
+        """
+        Changes the knife's texture as it goes through the swing.
+        Once the last texture has been reached the swing_finished
+        attribute becomes true and the knife despawns.
+        """
+
          # Change direction if needed
         if not self.swing_finished:
-            self.texture = self.idle_textures[self.cur_texture // 3][self.facing_direction]
-            self.cur_texture += 1
-        if self.cur_texture > 5:
+            self.texture = self.idle_textures[
+                self.cur_texture // ANIM_MULT["Knife"]["Idle"]
+                ][self.facing_direction]
+            self.cur_texture += UNIT_INCREMENT
+        if (
+            self.cur_texture 
+            > 
+            self.idle_frames*ANIM_MULT["Knife"]["Idle"]-INDEX_OFFSET
+            ):
             self.swing_finished = True
             
 # Player Class
-
 class PlayerCharacter(Entity):
     """Player Sprite"""
 
     def __init__(self, shape):
+        """
+        Initialises all of the textures of the various player shapes
+        available. For each shape different animations are available.
+        The attributes which are initialised are:
+        shape:          This is the form of the player sprite, and 
+                        determines which set of textures to use.
+        jumping:        States whether the player is jumping or not.
+                        Used to determine when to start doing certain
+                        animations.
+        is_on_ladder:   States whether the player is on a ladder.
+                        Used to determine when to start doing certain
+                        animations and physics movements.
+        is_dead:        Whether the player is dead. Used to start the
+                        death animation.
+        dying:          States if the player is in the death animation.
+                        Used to determine when to stop the animation
+                        and respawn the player.
+        """
 
-        if shape == 0:
+        if shape == PLAYER_SHAPE_HUMAN:
             available_anims = ["Idle", "Walk", "Jump", "Climb", "Death"]
         else:
             available_anims = ["Idle", "Walk", "Jump", "Death"]
         # Inherit from parent class (Entity)
-        super().__init__("Friendly", f"Player{shape+1}", available_anims)
+        super().__init__(
+            "Friendly", f"Player{shape+INDEX_OFFSET}", available_anims
+            )
 
         # Track state
         self.shape = shape
@@ -439,12 +632,20 @@ class PlayerCharacter(Entity):
         self.is_dead = False
         self.dying = False
 
-    def update_animation(self, delta_time: float = 1 / 60):
+    def update_animation(self, delta_time: float = FRAMERATE):
 
         # Change direction if needed
-        if self.change_x < 0 and self.facing_direction == RIGHT_FACING:
+        if (
+            self.change_x < STATIONARY 
+            and 
+            self.facing_direction == RIGHT_FACING
+            ):
             self.facing_direction = LEFT_FACING
-        elif self.change_x > 0 and self.facing_direction == LEFT_FACING:
+        elif (
+            self.change_x > STATIONARY 
+            and 
+            self.facing_direction == LEFT_FACING
+            ):
             self.facing_direction = RIGHT_FACING
 
         # Hierarchy of animations:
@@ -453,88 +654,121 @@ class PlayerCharacter(Entity):
         # Death animation
         if self.is_dead:
             if not self.dying:
-                self.cur_texture = 0
+                self.cur_texture = FIRST_TEXTURE
                 self.dying = True
-            
-            if self.shape == 0:
-                if self.cur_texture > 35:
-                    self.cur_texture = 0
-                    self.is_dead = False
+            if (
+                self.cur_texture 
+                > 
+                self.death_frames*ANIM_MULT["Player1"]["Death"]-INDEX_OFFSET
+                ):
+                self.cur_texture = FIRST_TEXTURE
+                self.is_dead = False
                   
-            elif self.shape == 1:
-                if self.cur_texture > 23:
-                    self.cur_texture = 0
-                    self.is_dead = False
-            elif self.shape == 2:
-                if self.cur_texture > 23:
-                    self.cur_texture = 0
-                    self.is_dead = False
-            self.texture = self.death_textures[self.cur_texture // 6][self.facing_direction]
-            self.cur_texture += 1 
+            self.texture = self.death_textures[
+                self.cur_texture // ANIM_MULT["Player1"]["Death"]
+                ][self.facing_direction]
+            self.cur_texture += UNIT_INCREMENT
             return
 
         # Climbing animation
-        if self.shape == 0:
+        if self.shape == PLAYER_SHAPE_HUMAN:
             if self.is_on_ladder:
                 self.climbing = True
             if not self.is_on_ladder and self.climbing:
                 self.climbing = False
-            if self.climbing and abs(self.change_y) > 1:
-                self.cur_texture += 1
-                if self.cur_texture > 31:
-                    self.cur_texture = 0
+            if self.climbing and abs(self.change_y) > START_CLIMB:
+                self.cur_texture += UNIT_INCREMENT
+                if (
+                    self.cur_texture 
+                    > 
+                    self.climbing_frames*ANIM_MULT["Player1"]["Climb"]
+                    -INDEX_OFFSET
+                    ):
+                    self.cur_texture = FIRST_TEXTURE
             if self.climbing:
-                self.texture = self.climbing_textures[self.cur_texture // 4][self.facing_direction]
+                self.texture = self.climbing_textures[
+                    self.cur_texture // ANIM_MULT["Player1"]["Climb"]
+                    ][self.facing_direction]
                 return
 
         # Jumping animation
-        if self.change_y > 0 and not self.is_on_ladder:
-            if self.shape == 2:
-                self.cur_texture += 1
-                if self.cur_texture > 23:
-                    self.cur_texture = 0
-                self.texture = self.jump_textures[self.cur_texture // 4][self.facing_direction]
+        if self.change_y > STATIONARY and not self.is_on_ladder:
+            if self.shape == PLAYER_SHAPE_BLAZE:
+                self.cur_texture += UNIT_INCREMENT
+                if (
+                    self.cur_texture 
+                    > self.jump_frames*ANIM_MULT["Player3"]["Jump"]
+                    -INDEX_OFFSET
+                    ):
+                    self.cur_texture = FIRST_TEXTURE
+                self.texture = self.jump_textures[
+                    self.cur_texture // ANIM_MULT["Player3"]["Jump"]
+                    ][self.facing_direction]
             else:
-                self.texture = self.jump_textures[0][self.facing_direction]
+                self.texture = self.jump_textures[
+                    FIRST_TEXTURE
+                    ][self.facing_direction]
             return
-        elif self.change_y < 0 and not self.is_on_ladder:
-            if self.shape == 2:
-                self.cur_texture += 1
-                if self.cur_texture > 23:
-                    self.cur_texture = 0
-                self.texture = self.fall_textures[self.cur_texture // 4][self.facing_direction]
+        elif self.change_y < STATIONARY and not self.is_on_ladder:
+            if self.shape == PLAYER_SHAPE_BLAZE:
+                self.cur_texture += UNIT_INCREMENT
+                if (
+                    self.cur_texture 
+                    > self.jump_frames*ANIM_MULT["Player3"]["Jump"]
+                    -INDEX_OFFSET
+                    ):
+                    self.cur_texture = FIRST_TEXTURE
+                self.texture = self.fall_textures[
+                    self.cur_texture // ANIM_MULT["Player3"]["Jump"]
+                    ][self.facing_direction]
             else:
-                self.texture = self.fall_textures[0][self.facing_direction]
+                self.texture = self.fall_textures[
+                    FIRST_TEXTURE
+                    ][self.facing_direction]
             return
 
         # Idle animation
-        if self.change_x == 0:
-            self.cur_texture += 1
-            if self.shape == 2:
-                if self.cur_texture > 23:
-                    self.cur_texture = 0
-                self.texture = self.idle_textures[self.cur_texture // 4][self.facing_direction]
+        if self.change_x == STATIONARY:
+            self.cur_texture += UNIT_INCREMENT
+            if self.shape == PLAYER_SHAPE_BLAZE:
+                if (
+                    self.cur_texture 
+                    > 
+                    self.idle_frames*ANIM_MULT["Player3"]["Idle"]
+                    -INDEX_OFFSET
+                    ):
+                    self.cur_texture = FIRST_TEXTURE
+                self.texture = self.idle_textures[
+                    self.cur_texture // ANIM_MULT["Player3"]["Idle"]
+                    ][self.facing_direction]
             else:
-
-                if self.cur_texture > 15:
-                    self.cur_texture = 0
-                self.texture = self.idle_textures[self.cur_texture // 8][self.facing_direction]
+                if (
+                    self.cur_texture 
+                    > 
+                    self.idle_frames*ANIM_MULT["Player1"]["Idle"]
+                    -INDEX_OFFSET
+                    ):
+                    self.cur_texture = FIRST_TEXTURE
+                self.texture = self.idle_textures[
+                    self.cur_texture // ANIM_MULT["Player1"]["Idle"]
+                    ][self.facing_direction]
             return
 
         # Walking animation
-        self.cur_texture += 1
-        if self.shape == 2:
-            if self.cur_texture > 23:
-                self.cur_texture = 0
-            self.texture = self.walk_textures[self.cur_texture // 4][self.facing_direction]
-        else:
-            if self.cur_texture > 15:
-                self.cur_texture = 0
-            self.texture = self.walk_textures[self.cur_texture // 4][self.facing_direction]
+        self.cur_texture += UNIT_INCREMENT
+        if (
+            self.cur_texture 
+            > 
+            self.idle_frames*ANIM_MULT["Player1"]["Walk"]
+            -INDEX_OFFSET
+            ):
+            self.cur_texture = FIRST_TEXTURE
+        self.texture = self.walk_textures[
+            self.cur_texture // ANIM_MULT["Player1"]["Walk"]
+            ][self.facing_direction]
 
 
 # Villager NPC
-
 class DefaultVillager(Entity):
     """Basic Villager Sprite"""
     def __init__(self, villager_texture_id):
@@ -636,8 +870,27 @@ class EndScreen(arcade.View):
     """
     The screen displayed when the game is finished.
     """
-    def __init__(self):
+    def __init__(self, secrets_found):
+        super().__init__()
         self.background = arcade.load_texture()
+        self.secrets_to_display = ""
+        self.secrets_found = secrets_found
+        if "Statuette" in self.secrets_found:
+            self.secrets_to_display += "1"
+        else:
+            self.secrets_to_display += "0"
+        if "Diamond Pickaxe" in self.secrets_found:
+            self.secrets_to_display += "1"
+        else:
+            self.secrets_to_display += "0"
+        if "Diamond" in self.secrets_found:
+            self.secrets_to_display += "1"
+        else:
+            self.secrets_to_display += "0"
+        if "Totem" in self.secrets_found:
+            self.secrets_to_display += "1"
+        else:
+            self.secrets_to_display += "0"
     def on_show_view(self):
         """Called when showing this view."""
         arcade.draw_lrwh_rectangle_textured(
@@ -647,6 +900,14 @@ class EndScreen(arcade.View):
             SCREEN_HEIGHT,
             self.background
         )
+        arcade.draw_lrwh_rectangle_textured(
+            0,
+            0,
+            SCREEN_WIDTH,
+            0.5*SCREEN_HEIGHT,
+            f"{self.secrets_to_display}.png"
+        )
+
 
 # Actual Game
 class GameView(arcade.View):
