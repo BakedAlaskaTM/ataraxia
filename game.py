@@ -5,8 +5,8 @@ import arcade, os, random, math
 MAIN_PATH = os.path.dirname(os.path.abspath(__file__))
 
 # Window Settings
-SCREEN_WIDTH = 1280
-SCREEN_HEIGHT = 720
+SCREEN_WIDTH = 1920
+SCREEN_HEIGHT = 1080
 SCREEN_TITLE = "Ataraxia V1"
 
 # Sprite Scaling
@@ -60,8 +60,12 @@ PLAYER_JUMP_SPEED = 20
 PLAYER_START_X = 3
 PLAYER_START_Y = 18
 
+
 # Timing constants
 KNIFE_COOLDOWN = 0.5
+
+# Volume constants
+MUSIC_VOLUME = 0.3
 
 # Dictionary References
 QUEST_REF = {
@@ -103,6 +107,14 @@ QUEST_REF = {
         "item": "Helmet",
         "number": 1,
         "reward_item": "Cave Key",
+        "reward_num": 1
+    },
+    "200": {
+        "dialogue": "I get rainbow rock. You get key of god. Deal?",
+        "dialogue_time": 3,
+        "item": "Rainbow Rock",
+        "number": 1,
+        "reward_item": "God Key",
         "reward_num": 1
     }
 }
@@ -316,29 +328,54 @@ class Helmet(Collectible):
         self.type = None
         self.texture = self.idle_textures[0][RIGHT_FACING]
 
+# Rainbow Rock class
+class RainbowRock(Collectible):
+    """Quest collectible rainbow rock"""
+    def __init__(self):
+        # Inherit from parent class (Collectible)
+        super().__init__("RainbowRock")
+        self.type = None
+        self.texture = self.idle_textures[0][RIGHT_FACING]
+
 # Secrets sprite classes
-# Secret statuette class
+# Constructor for secret statuette texture
 class Statuette(Collectible):
     """Sprite for statuette (secret)"""
     def __init__(self):
         super().__init__("Statuette")
         self.type = None
-        self.texture = self.idle_textures[0][0]
+        self.texture = self.idle_textures[0][RIGHT_FACING]
 
+# Constructor for secret diamond pickaaxe texture
 class DiamondPickaxe(Collectible):
     """Sprite for diamond pickaxe (secret)"""
     def __init__(self):
         super().__init__("DiamondPickaxe")
         self.type = None
-        self.texture = self.idle_textures[0][0]
+        self.texture = self.idle_textures[0][RIGHT_FACING]
 
+# Constructor for secret diamond ore texture
+class Diamond(Collectible):
+    """Sprite for diamond (secret)"""
+    def __init__(self):
+        super().__init__("Diamond")
+        self.type = None
+        self.texture = self.idle_textures[0][RIGHT_FACING]
+
+# Constructor for secret totem texture
+class Totem(Collectible):
+    """Sprite for totem (secret)"""
+    def __init__(self):
+        super().__init__("Totem")
+        self.type = None
+        self.texture = self.idle_textures[0][RIGHT_FACING]
 
 # Class for the level end portal sprite
 class GoalPortal(Entity):
     """Sprite for next level portal"""
     def __init__(self):
         super().__init__("InanimateObjects", "GoalPortal", ["Idle"])
-        self.texture = self.idle_textures[0][0]
+        self.texture = self.idle_textures[0][RIGHT_FACING]
         self.warp = None
         self.dest = None
 
@@ -352,14 +389,14 @@ class LockedDoor(Entity):
         super().__init__("InanimateObjects", "LockedDoor", ["Idle", "Open", "Closed"])
         self.id = None        
         self.open = False
-        self.texture = self.closed_textures[0][0]
+        self.texture = self.closed_textures[0][RIGHT_FACING]
         
 
     def update_animation(self, delta_time: float = 1 / 60):
         if self.open == False:
-            self.texture = self.closed_textures[0][0]
+            self.texture = self.closed_textures[0][RIGHT_FACING]
         else:
-            self.texture = self.open_textures[0][0]
+            self.texture = self.open_textures[0][RIGHT_FACING]
 
 # Knife class
 class Knife(Entity):
@@ -380,10 +417,6 @@ class Knife(Entity):
         if self.cur_texture > 5:
             self.swing_finished = True
             
-
-
-        
-
 # Player Class
 
 class PlayerCharacter(Entity):
@@ -440,8 +473,6 @@ class PlayerCharacter(Entity):
             self.cur_texture += 1 
             return
 
-                 
-        
         # Climbing animation
         if self.shape == 0:
             if self.is_on_ladder:
@@ -540,7 +571,7 @@ class Enemy(Entity):
     """Template class for all enemies"""
     def __init__(self, category_folder, sprite_folder):
         # Setup parent class
-        super().__init__(category_folder, sprite_folder, ["Idle", "Walk", "Death"])
+        super().__init__(category_folder, sprite_folder, ["Idle", "Walk"])
         self.drop = None
     
     def update_animation(self, delta_time: float = 1 / 60):
@@ -561,11 +592,17 @@ class Enemy(Entity):
         
 # Wraith enemy class
 class Wraith(Enemy):
-    """Wraith enemy"""
+    """Wraith enemy texture"""
     def __init__(self):
         super().__init__("Enemies", "Wraith")
         self.change_x = 5
 
+# Bird enemy class
+class Bird(Enemy):
+    """Bird enemy texture"""
+    def __init__(self):
+        super().__init__("Enemies", "Bird")
+        self.change_x = 20
 
 # Menu Screen
 class MainMenu(arcade.View):
@@ -594,7 +631,22 @@ class MainMenu(arcade.View):
         game_view = GameView()
         self.window.show_view(game_view)
 
-
+# End Screen
+class EndScreen(arcade.View):
+    """
+    The screen displayed when the game is finished.
+    """
+    def __init__(self):
+        self.background = arcade.load_texture()
+    def on_show_view(self):
+        """Called when showing this view."""
+        arcade.draw_lrwh_rectangle_textured(
+            0,
+            0,
+            SCREEN_WIDTH,
+            SCREEN_HEIGHT,
+            self.background
+        )
 
 # Actual Game
 class GameView(arcade.View):
@@ -615,7 +667,6 @@ class GameView(arcade.View):
         self.right_pressed = False
         self.up_pressed = False
         self.down_pressed = False
-        self.running = False
         self.jump_needs_reset = False
         self.interact = False
         self.swing_knife = False
@@ -633,12 +684,14 @@ class GameView(arcade.View):
             "002": {"name": "Documents", "number": 0},
             "003": {"name": "Ectoplasm", "number": 0},
             "100": {"name": "Helmet", "number": 0},
+            "200": {"name": "Rainbow Rock", "number": 0}
         }
 
         self.inventory_other = {
             "002": {"name": "Knife", "type": "Weapon", "number": 0},
             "003": {"name": "Church Key", "type": "Key", "number": 0},
-            "100": {"name": "Cave Key", "type": "Key", "number": 0}
+            "100": {"name": "Cave Key", "type": "Key", "number": 0},
+            "200": {"name": "God Key", "type": "Key", "number": 0}
         }
         self.keys_obtained = []
         self.secrets_found = []
@@ -671,6 +724,9 @@ class GameView(arcade.View):
         self.missing_key_text = 0
         self.secret_found_text = 0
 
+        # Sound effects and audio
+        self.bg_music = arcade.load_sound(f"{MAIN_PATH}/assets/Audio/Background.mp3")
+
         # Warp variables
         self.doors = {}
 
@@ -694,10 +750,13 @@ class GameView(arcade.View):
         self.gui_camera = None
 
         # Level setup
-        self.level = 2.1
+        self.level = 1.1
 
         # Primary camera for scrolling the screen
         self.camera = None
+
+        # Play background music
+        arcade.play_sound(self.bg_music, MUSIC_VOLUME, looping=True)
 
     def setup(self):
         """Game setup which runs each time game is restarted."""
@@ -780,8 +839,8 @@ class GameView(arcade.View):
 
         if str(self.level) in ["1.1", "3.1"]:
             arcade.set_background_color((99, 245, 255))
-        elif str(self.level) in ["2.1"]:
-            arcade.set_background_color((0, 0, 0))
+        elif str(self.level) in ["2.1", "2.2"]:
+            arcade.set_background_color((158, 158, 158))
         else:
             arcade.set_background_color((0, 0, 0))
 
@@ -839,6 +898,8 @@ class GameView(arcade.View):
                 enemy_type = enemy_object.properties["type"]
                 if enemy_type == "Wraith":
                     enemy = Wraith()
+                if enemy_type == "Bird":
+                    enemy = Bird()
                 enemy.center_x = math.floor(
                     (cartesian[0]) * TILE_SCALING * self.tile_map.tile_width
                 )
@@ -851,6 +912,8 @@ class GameView(arcade.View):
                     enemy.boundary_right = enemy_object.properties["boundary_right"]
                 if "drop" in enemy_object.properties:
                     enemy.drop = enemy_object.properties["drop"]
+                if "can_kill" in enemy_object.properties:
+                    enemy.can_kill = enemy_object.properties["can_kill"]
                 self.map_has_enemies = True
                 self.scene.add_sprite(LAYER_NAME_ENEMIES, enemy)
         except:
@@ -920,6 +983,8 @@ class GameView(arcade.View):
                     collectible.id = collectible_object.properties["unlocks"]
                 if collectible_type == "Helmet":
                     collectible = Helmet()
+                if collectible_type == "Rainbow Rock":
+                    collectible = RainbowRock()
                 if collectible_type == "Secret":
                     collectible_name = collectible_object.properties["name"]
                     if collectible_name == "Statuette":
@@ -928,7 +993,12 @@ class GameView(arcade.View):
                     if collectible_name == "Diamond Pickaxe":
                         collectible = DiamondPickaxe()
                         collectible.name = collectible_name
-
+                    if collectible_name == "Diamond":
+                        collectible = Diamond()
+                        collectible.name = collectible_name
+                    if collectible_name == "Totem":
+                        collectible = Totem()
+                        collectible.name = collectible_name
                 collectible.type = collectible_type
                 collectible.center_x = math.floor(
                     (cartesian[0]+0.5) * TILE_SCALING * self.tile_map.tile_width
@@ -1191,7 +1261,7 @@ class GameView(arcade.View):
                 arcade.draw_rectangle_filled(
                     SCREEN_WIDTH-24*TILE_SCALING,
                     SCREEN_HEIGHT-(60+count*9)*TILE_SCALING,
-                    200,
+                    250,
                     30,
                     (255, 255, 255)
                 )
@@ -1215,40 +1285,23 @@ class GameView(arcade.View):
         """
         # Process up/down
         if self.up_pressed and not self.down_pressed:
-            if self.running:
-                if self.physics_engine.is_on_ladder():
-                    self.player_sprite.change_y = PLAYER_WALK_SPEED
-                elif self.shape == 2:
-                    self.fly_speed += (self.thrust - GRAVITY)*self.delta_time
-                else:
-                    if (
-                        self.physics_engine.can_jump(y_distance=10)
-                        and not self.jump_needs_reset
-                    ):
-                        self.player_sprite.change_y = PLAYER_JUMP_SPEED
-                        self.jump_needs_reset = True
-                    elif self.down_pressed and not self.up_pressed:
-                        if self.physics_engine.is_on_ladder():
-                            self.player_sprite.change_y = -PLAYER_WALK_SPEED
-                        elif self.shape == 2:
-                            self.fly_speed -= (self.thrust + 4*GRAVITY)*self.delta_time
+            if self.physics_engine.is_on_ladder():
+                self.player_sprite.change_y = PLAYER_WALK_SPEED
+            elif self.shape == 2:
+                self.fly_speed += (self.thrust - GRAVITY)*self.delta_time
             else:
-                if self.physics_engine.is_on_ladder():
-                    self.player_sprite.change_y = PLAYER_WALK_SPEED
-                elif self.shape == 2:
-                    self.fly_speed += (self.thrust - GRAVITY)*self.delta_time
-                else:
-                    if (
-                        self.physics_engine.can_jump(y_distance=10)
-                        and not self.jump_needs_reset
-                    ):
-                        self.player_sprite.change_y = PLAYER_JUMP_SPEED
-                        self.jump_needs_reset = True
-                    elif self.down_pressed and not self.up_pressed:
-                        if self.physics_engine.is_on_ladder():
-                            self.player_sprite.change_y = -PLAYER_WALK_SPEED
-                        elif self.shape == 2:
-                            self.fly_speed -= (self.thrust + 4*GRAVITY)*self.delta_time
+                if (
+                    self.physics_engine.can_jump(y_distance=10)
+                    and not self.jump_needs_reset
+                ):
+                    self.player_sprite.change_y = PLAYER_JUMP_SPEED
+                    self.jump_needs_reset = True
+        elif self.down_pressed and not self.up_pressed:
+            if self.physics_engine.is_on_ladder():
+                self.player_sprite.change_y = -PLAYER_WALK_SPEED
+            elif self.shape == 2:
+                self.fly_speed -= (self.thrust + 4*GRAVITY)*self.delta_time
+
         # Process up/down when on a ladder and no movement
         if self.physics_engine.is_on_ladder():
             if not self.up_pressed and not self.down_pressed:
@@ -1258,15 +1311,9 @@ class GameView(arcade.View):
 
         # Process left/right
         if self.right_pressed and not self.left_pressed:
-            if self.running:
-                self.player_sprite.change_x = PLAYER_RUN_SPEED
-            else:
-                self.player_sprite.change_x = PLAYER_WALK_SPEED
+            self.player_sprite.change_x = PLAYER_WALK_SPEED
         elif self.left_pressed and not self.right_pressed:
-            if self.running:
-                self.player_sprite.change_x = -PLAYER_RUN_SPEED
-            else:
-                self.player_sprite.change_x = -PLAYER_WALK_SPEED
+            self.player_sprite.change_x = -PLAYER_WALK_SPEED
         else:
             self.player_sprite.change_x = 0
 
@@ -1285,9 +1332,6 @@ class GameView(arcade.View):
             self.left_pressed = True
         elif key == arcade.key.RIGHT or key == arcade.key.D:
             self.right_pressed = True
-
-        if key == arcade.key.LSHIFT:
-            self.running = True
 
         if key == arcade.key.F:
             self.interact = True
@@ -1375,10 +1419,10 @@ class GameView(arcade.View):
         if key == arcade.key.R:
             self.player_sprite.center_x = self.tile_map.tile_width * TILE_SCALING * PLAYER_START_X
             self.player_sprite.center_y = self.tile_map.tile_height * TILE_SCALING * PLAYER_START_Y
-        self.process_keychange()
-
+        
         if key == arcade.key.Z and self.inventory_other["002"]["number"] > 0 and self.can_knife:
             self.swing_knife = True
+        self.process_keychange()
 
     def on_key_release(self, key, modifiers):
         """Called when the user releases a key."""
@@ -1396,9 +1440,6 @@ class GameView(arcade.View):
             self.left_pressed = False
         elif key == arcade.key.RIGHT or key == arcade.key.D:
             self.right_pressed = False
-
-        if key == arcade.key.LSHIFT:
-            self.running = False
 
         if key == arcade.key.F:
             self.interact = False
@@ -1450,7 +1491,6 @@ class GameView(arcade.View):
         else:
             if self.energy < 3:
                 self.energy += QUEST_REF[villager.id]["reward_num"]
-
 
     def on_update(self, delta_time):
         """Movement and game logic"""
@@ -1532,8 +1572,6 @@ class GameView(arcade.View):
                 LAYER_NAME_BACKGROUND,
             ] + self.available_layers
         )
-                
-
 
         # Update moving platforms and enemies
         if self.map_has_enemies:
@@ -1599,7 +1637,7 @@ class GameView(arcade.View):
                                     if villager.id not in self.quests.keys():
                                         villager.wave = True
                                         self.activate_quest(villager)
-                                    else:
+                                    elif self.latest_quest["dialogue_time"] <= 0:
                                         self.check_quest_complete(villager)
                                 else:
                                     villager.wave = True
@@ -1684,8 +1722,10 @@ class GameView(arcade.View):
                     self.scene[LAYER_NAME_COLLECTIBLES].remove(collision)
                 if collision.type == "Secret":
                     self.secret_found_text = 2
+                    print("This works")
                     self.secrets_found.append(collision.name)
-                    self.scene[LAYER_NAME_COLLECTIBLES].remove(collision)
+                    print("This doesn't")
+                    self.scene[LAYER_NAME_COLLECTIBLES].remove(collision)   
 
         except:
             pass
@@ -1714,6 +1754,7 @@ class GameView(arcade.View):
             quest_req_cards = False
             quest_req_documents = False
             quest_req_helmets = False
+            quest_req_rainbow_rocks = False
             for id, info in self.quests.items():
                 if info["quest_item"] == "Apple":
                     quest_req_apples = True
@@ -1727,30 +1768,43 @@ class GameView(arcade.View):
                 if info["quest_item"] == "Helmet":
                     quest_req_helmets = True
                     quest_id_helmets = id
+                if info["quest_item"] == "Rainbow Rock":
+                    quest_req_rainbow_rocks = True
+                    quest_id_rainbow_rocks = id
             
-            
-            player_collision_list = arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_COLLECTIBLES])
-            for collision in player_collision_list:
-                if quest_req_apples:
-                    # Check for collisions with apples
-                    if collision.type == "Apple":
-                        self.inventory_quest[quest_id_apples]["number"] += 1
-                        self.scene[LAYER_NAME_COLLECTIBLES].remove(collision)
-                if quest_req_cards:
-                    # Check for collisions with cards
-                    if collision.type == "Card":
-                        self.inventory_quest[quest_id_cards]["number"] += 1
-                        self.scene[LAYER_NAME_COLLECTIBLES].remove(collision)
-                if quest_req_documents:
-                    # Check for collisions with documents
-                    if collision.type == "Document":
-                        self.inventory_quest[quest_id_documents]["number"] += 1
-                        self.scene[LAYER_NAME_COLLECTIBLES].remove(collision)
-                if quest_req_helmets:
-                    # Check for collisions with helmets
-                    if collision.type == "Helmet":
-                        self.inventory_quest[quest_id_helmets]["number"] += 1
-                        self.scene[LAYER_NAME_COLLECTIBLES].remove(collision)
+            # Try Except is used here to ensure no errors.
+            # If there is an error that means the level doesn't
+            # actually have any collectibles.
+            try:
+                player_collision_list = arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_COLLECTIBLES])
+                for collision in player_collision_list:
+                    if quest_req_apples:
+                        # Check for collisions with apples
+                        if collision.type == "Apple":
+                            self.inventory_quest[quest_id_apples]["number"] += 1
+                            self.scene[LAYER_NAME_COLLECTIBLES].remove(collision)
+                    if quest_req_cards:
+                        # Check for collisions with cards
+                        if collision.type == "Card":
+                            self.inventory_quest[quest_id_cards]["number"] += 1
+                            self.scene[LAYER_NAME_COLLECTIBLES].remove(collision)
+                    if quest_req_documents:
+                        # Check for collisions with documents
+                        if collision.type == "Document":
+                            self.inventory_quest[quest_id_documents]["number"] += 1
+                            self.scene[LAYER_NAME_COLLECTIBLES].remove(collision)
+                    if quest_req_helmets:
+                        # Check for collisions with helmets
+                        if collision.type == "Helmet":
+                            self.inventory_quest[quest_id_helmets]["number"] += 1
+                            self.scene[LAYER_NAME_COLLECTIBLES].remove(collision)
+                    if quest_req_rainbow_rocks:
+                        # Check for collisions with rainbow rocks
+                        if collision.type == "Rainbow Rock":
+                            self.inventory_quest[quest_id_rainbow_rocks]["number"] += 1
+                            self.scene[LAYER_NAME_COLLECTIBLES].remove(collision)
+            except:
+                pass
 
 
         # Update energy bar
@@ -1764,10 +1818,11 @@ class GameView(arcade.View):
         try:
             knife_collision_list = arcade.check_for_collision_with_list(self.scene[LAYER_NAME_KNIFE][0], self.scene[LAYER_NAME_ENEMIES])
             for collision in knife_collision_list:
-                for id, info in self.inventory_quest.items():
-                    if collision.drop == info["name"]:
-                        self.inventory_quest[id]["number"] += 1
-                self.scene[LAYER_NAME_ENEMIES].remove(collision)
+                if collision.can_kill:
+                    for id, info in self.inventory_quest.items():
+                        if collision.drop == info["name"]:
+                            self.inventory_quest[id]["number"] += 1
+                    self.scene[LAYER_NAME_ENEMIES].remove(collision)
         
         except:
             pass
@@ -1799,22 +1854,7 @@ class GameView(arcade.View):
         except:
             pass
         
-        # Check for collision with death layer (spikes etc)
-        try:
-            if len(arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_DEATH])) > 0:
-                self.health = 3
-                self.energy = 3
-                self.is_dead = True
-        except:
-            pass
-        
-        # Run player death animation
-        if self.player_sprite.center_y < 0 or self.health <= 0:
-            self.health = 3
-            self.energy = 3
-            self.player_sprite.is_dead = True
-            
-        
+
         # Once death animation over respawn
         if self.player_sprite.dying and self.player_sprite.dying != self.player_sprite.is_dead:
             self.player_sprite.center_x = self.tile_map.tile_width * TILE_SCALING * self.spawnpoint[0]
@@ -1822,6 +1862,24 @@ class GameView(arcade.View):
             
             self.player_sprite.dying = False
 
+        # Check for collision with death layer (spikes etc)
+        try:
+            if len(arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_DEATH])) > 0 and not self.player_sprite.is_dead:
+                self.player_sprite.is_dead = True
+        except:
+            pass
+        
+        # Run player death animation
+        if self.player_sprite.center_y < 0 or self.health <= 0 and not self.player_sprite.is_dead:
+            
+            self.player_sprite.is_dead = True
+        
+        if self.player_sprite.is_dead:
+            self.health = 3
+            self.energy = 3
+            self.fly_speed = 0
+
+            
         if len(self.quests) > 0:
             self.in_quest = True
         else:
@@ -1875,9 +1933,13 @@ class GameView(arcade.View):
         try:
             player_collision_list = arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_GOAL])
             for collision in player_collision_list:
-                self.level = collision.warp
-                self.spawnpoint = collision.dest
-                self.setup()
+                if collision.warp == "4":
+                    end_view = EndScreen()
+                    self.window.show_view(end_view)
+                else:
+                    self.level = collision.warp
+                    self.spawnpoint = collision.dest
+                    self.setup()
                 return
         except:
             pass

@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.10.2" orientation="orthogonal" renderorder="right-down" width="10" height="5" tilewidth="16" tileheight="16" infinite="0" nextlayerid="14" nextobjectid="7">
+ <tileset firstgid="1" source="Testing Tiles.tsx"/>
+ <tileset firstgid="32" source="Interior.tsx"/>
+ <layer id="9" name="Door Barrier Closed" width="10" height="5">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,46,
+0,0,0,0,0,0,0,0,0,0
+</data>
+ </layer>
+ <layer id="8" name="Door Barrier Open" width="10" height="5">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0
+</data>
+ </layer>
+ <layer id="2" name="Background" width="10" height="5">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,0,0,
+0,31,31,31,31,31,31,31,31,0,
+0,31,31,31,31,31,31,31,31,0,
+0,31,31,31,31,31,31,31,31,31,
+0,0,0,0,0,0,0,0,0,0
+</data>
+ </layer>
+ <layer id="3" name="Furniture" width="10" height="5">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,
+0,47,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0
+</data>
+ </layer>
+ <layer id="4" name="Door Background" width="10" height="5">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,43,
+0,0,0,0,0,0,0,0,0,0
+</data>
+ </layer>
+ <layer id="1" name="Platforms" width="10" height="5">
+  <data encoding="csv">
+5,5,5,5,5,5,5,5,5,5,
+5,0,0,0,0,0,0,0,0,5,
+5,0,0,0,0,0,0,0,0,5,
+5,0,0,0,0,0,0,0,0,0,
+5,5,5,5,5,5,5,5,5,5
+</data>
+ </layer>
+ <layer id="13" name="Ladders" width="10" height="5">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0
+</data>
+ </layer>
+ <objectgroup id="12" name="Moving Platforms"/>
+ <layer id="11" name="Moving Platforms" width="10" height="5">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0
+</data>
+ </layer>
+ <objectgroup id="7" name="Locked Doors">
+  <properties>
+   <property name="id" value="1.3.1"/>
+  </properties>
+ </objectgroup>
+ <objectgroup id="6" name="Collectibles">
+  <object id="5" x="24" y="45.0909">
+   <properties>
+    <property name="name" value="Totem"/>
+    <property name="type" value="Secret"/>
+   </properties>
+   <point/>
+  </object>
+ </objectgroup>
+ <objectgroup id="10" name="Warp Doors">
+  <object id="6" x="157.818" y="57.8182">
+   <properties>
+    <property name="dest_x" type="int" value="10"/>
+    <property name="dest_y" type="int" value="62"/>
+    <property name="key_req" value="None"/>
+    <property name="warp" value="3.1"/>
+   </properties>
+   <point/>
+  </object>
+ </objectgroup>
+</map>
