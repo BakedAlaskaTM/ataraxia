@@ -1,3 +1,8 @@
+# Quick note:
+# Try-Excepts are used in this program to prevent
+# errors, where if an error occurs the layer must not exist
+# in the scene, and all code relating to it can be ignored.
+
 # Import all modules/libraries required to run the code.
 import arcade, os, math
 
@@ -2187,6 +2192,13 @@ class GameView(arcade.View):
     def on_key_press(self, key, modifiers):
         """Called whenever a key is pressed."""
 
+        # If Up Arrow or W key pressed make self.up_pressed True.
+        # If the player is in the blaze shape also make the flying
+        # state to True.
+        # If Down Arrow or S pressed make self.down_pressed True.
+        # If in blaze shape also make flying state True.
+        # Do the same for left and right states but no flying state
+        # changes.
         if key == arcade.key.UP or key == arcade.key.W:
             self.up_pressed = True
             if self.shape == PLAYER_SHAPE_BLAZE:
@@ -2200,10 +2212,21 @@ class GameView(arcade.View):
         elif key == arcade.key.RIGHT or key == arcade.key.D:
             self.right_pressed = True
 
+        # The key to interact is F.
         if key == arcade.key.F:
             self.interact = True
 
+        # Shapeshifting is only possible when energy is full.
+        # The way shapeshifting works is by deleting the current
+        # player sprite and creating a new one in the new shape at the
+        # same position and create a new physics engine for that new
+        # player sprite, overriding the old one.
         if self.energy >= MAX_ENERGY:
+
+            # If the '1' key is pressed and the player isn't already
+            # in the human shape change to human shape.
+            # Also consume 3 energy, bring the energy bar back down to
+            # empty.
             if key == arcade.key.KEY_1 and self.shape != PLAYER_SHAPE_HUMAN:
                 player_pos = (
                     self.player_sprite.center_x, 
@@ -2217,6 +2240,9 @@ class GameView(arcade.View):
                 self.player_sprite.center_y = player_pos[Y_POS]
 
                 self.scene.add_sprite(LAYER_NAME_PLAYER, self.player_sprite)
+                # This is a repeat of the physics engine setup from 
+                # the setup() method. The try-except is used for
+                # the same reason.
                 try:
                     self.physics_engine = arcade.PhysicsEnginePlatformer(
                         self.player_sprite,
@@ -2236,6 +2262,9 @@ class GameView(arcade.View):
                         ladders=self.scene[LAYER_NAME_LADDERS],
                         walls=self.scene[LAYER_NAME_PLATFORMS],
                     )
+
+            # If the '2' key is pressed and shape is not dog,
+            # shapeshift into dog shape and consume 3 energy.
             if key == arcade.key.KEY_2 and self.shape != PLAYER_SHAPE_DOG:
                 player_pos = (
                     self.player_sprite.center_x, 
@@ -2266,6 +2295,9 @@ class GameView(arcade.View):
                         gravity_constant=GRAVITY,
                         walls=self.scene[LAYER_NAME_PLATFORMS],
                     )
+
+            # If the '3' key is pressed and shape is not blaze,
+            # change into blaze shape and consume 3 energy.
             if key == arcade.key.KEY_3 and self.shape != PLAYER_SHAPE_BLAZE:
                 player_pos = (
                     self.player_sprite.center_x, 
@@ -2297,11 +2329,10 @@ class GameView(arcade.View):
                         walls=self.scene[LAYER_NAME_PLATFORMS],
                     )
 
-        #if key == arcade.key.Q:
-        #    if self.energy < MAX_ENERGY:
-        #        self.energy += 1
-
+        # If the 'R' key is pressed reset the level and 
+        # respawn the player back to the start of the level.
         if key == arcade.key.R:
+            self.setup()
             self.player_sprite.center_x = (
                 self.tile_map.tile_width 
                 * TILE_SCALING 
@@ -2313,6 +2344,8 @@ class GameView(arcade.View):
                 * PLAYER_START_Y
                 )
         
+        # If 'Z' is pressed and the player can use their knife
+        # then swing the knife.
         if (
             key == arcade.key.Z 
             and 
@@ -2321,11 +2354,14 @@ class GameView(arcade.View):
             self.can_knife
             ):
             self.swing_knife = True
+
+        # Check for any changes in movement key presses.
         self.process_keychange()
 
     def on_key_release(self, key, modifiers):
         """Called when the user releases a key."""
 
+        # Change movement states to False when keys are released.
         if key == arcade.key.UP or key == arcade.key.W:
             self.up_pressed = False
             self.jump_needs_reset = False
@@ -2340,9 +2376,13 @@ class GameView(arcade.View):
         elif key == arcade.key.RIGHT or key == arcade.key.D:
             self.right_pressed = False
 
+        # Once the F key is released stop interacting.
         if key == arcade.key.F:
             self.interact = False
 
+        # Once the Z key is released stop swinging the knife.
+        # This enables the player to hold down Z and continuously
+        # swing the knife, though with a cooldown in between.
         if (
             key == arcade.key.Z 
             and 
@@ -2350,9 +2390,19 @@ class GameView(arcade.View):
             ):
             self.swing_knife = False
 
+        # Check for any changes in movement key presses.
         self.process_keychange()
 
     def center_camera_to_player(self, speed=CAMERA_TRACK_SPEED):
+        """
+        Adjust the camera's position on the tilemap so that the
+        player is always in the center, unless camera has already
+        reached the bottom left corner, in which case the camera
+        does not move further.
+        """
+
+        # Set the centre coordinates of the screen
+        # relative to the player.
         screen_center_x = (
             self.camera.scale 
             * (
@@ -2367,6 +2417,9 @@ class GameView(arcade.View):
             - (self.camera.viewport_height*HALF_BLOCK)
             )
             )
+        
+        # If the screen is deviated from the player place it back on
+        # the player.
         if screen_center_x < ORIGIN[X_POS]:
             screen_center_x = ORIGIN[X_POS]
         if screen_center_y < ORIGIN[Y_POS]:
@@ -2381,6 +2434,10 @@ class GameView(arcade.View):
         Takes the quest info from the reference
         dictionary depending on the villager interacted with.
         """
+        
+        # When a quest is activated record all of the details,
+        # including the villager who issued the quest, and
+        # all of the items needed.
         quest = QUEST_REF[villager.id]
         self.start_dialogue = quest["dialogue"]
         self.quests[villager.id] = {
@@ -2390,20 +2447,45 @@ class GameView(arcade.View):
             "num_needed": quest["number"],
             "dialogue_time": quest["dialogue_time"],
         }
+
+        # Set the latest quest to the new quest.
         self.latest_quest = self.quests[villager.id]
 
     def check_quest_complete(self, villager):
+        """
+        Checks if the quest in progress has been completed.
+        """
+
+        # If there are not enough required items set the current quest
+        # to check to this quest and display the quest not complete
+        # text above the villager in interaction.
+        # Otherwise proceed to the end quest function.
         if (
             self.inventory_quest[villager.id]["number"] 
             < 
             self.quests[villager.id]["num_needed"]
             ):
-            self.check_quest = self.quests[villager.id]
             self.not_complete_time = QUEST_INCOMPLETE_TIME
+            self.check_quest = self.quests[villager.id]
+            
         else:
             self.end_quest(villager)
     
     def end_quest(self, villager):
+        """
+        Concludes the quest which has been adequately done.
+        Removes the quest from the current quest list and gives
+        rewards.
+        """
+
+        # Set the most recent finished quest to this one.
+        # Display the quest finished text for the specified amount
+        # of time.
+        # Also add the completed quest to the completed quests list.
+        # Subtract the required items from the quest inventory and add
+        # rewards to the rewards and other things inventory, unless the
+        # reward is energy in which case if the energy bar is not
+        # already full the energy will increase by 1.
         self.finished_quest = self.quests.pop(villager.id)
         self.finished_quest["dialogue_time"] = QUEST_COMPLETE_TIME
         self.quest_ended = True
@@ -2431,11 +2513,18 @@ class GameView(arcade.View):
         # Reset the interactable text
         self.can_interact = False
 
+        # Increase the scope of the delta_time variable
+        # (frame update time) to the class level.
         self.delta_time = delta_time
+
         # Move the player
         self.physics_engine.update()
 
         # If blaze shape then do helicopter physics
+        # This means accelerating the player vertically
+        # and subjecting them to gravity when they're not flying.
+        # If the player hits the ground after 1s the player will stop
+        # having a downwards velocity into the ground.
         if self.shape == PLAYER_SHAPE_BLAZE:
             self.player_sprite.change_y = self.fly_speed
             if not self.is_flying:
@@ -2451,6 +2540,8 @@ class GameView(arcade.View):
                 
 
         # Update animations for the player
+        # Change the various states of the player based on
+        # physics interactions.
         if self.physics_engine.can_jump():
             self.player_sprite.can_jump = False
         else:
@@ -2469,6 +2560,8 @@ class GameView(arcade.View):
 
         # Check if knife is being swung
         if self.can_knife:
+            # If knife is swung then spawn knife in front of player
+            # and play the animation.
             if self.swing_knife:
                 knife = Knife()
                 if self.player_sprite.facing_direction == RIGHT_FACING:
@@ -2486,9 +2579,15 @@ class GameView(arcade.View):
                 knife.center_y = self.player_sprite.center_y
                     
                 self.scene.add_sprite(LAYER_NAME_KNIFE, knife)
+
+                # Stop swinging knife and activate knife ban.
                 self.swing_knife = False
                 self.can_knife = False
         else:
+            # If knife can't be swung increment the cooldown timer
+            # until it can be swung again.
+            # If the timer goes past the cooldown time reset the timer
+            # and allow the knife to be swung.
             self.knife_timer += delta_time
             if self.knife_timer >= KNIFE_COOLDOWN:
                 self.can_knife = True
@@ -2517,7 +2616,7 @@ class GameView(arcade.View):
         except:
             pass
 
-        # Update animations for other things
+        # Update animations for other layers.
         self.scene.update_animation(
             delta_time,
             [
@@ -2527,6 +2626,7 @@ class GameView(arcade.View):
         )
 
         # Update moving platforms and enemies
+        # If there are no moving enemies only update moving platforms.
         if self.map_has_enemies:
             self.scene.update(
                 [
@@ -2539,7 +2639,11 @@ class GameView(arcade.View):
                 [LAYER_NAME_MOVING_PLATFORMS]
             )
 
-        # Update villagers
+        # All try-excepts beyond this point are used to prevent errors
+        # where in some tilemaps certain layers do not exist and will
+        # cause an error when attempting to access.
+
+        # Update villagers' interaction possible sensing.
         try:
             for villager in self.scene[LAYER_NAME_VILLAGERS]:
                 villager.update(
@@ -2584,6 +2688,8 @@ class GameView(arcade.View):
 
         # Only try to check interaction with villagers if in human shape
         if self.shape == PLAYER_SHAPE_HUMAN:
+            # If the villager is close enough assign the ID of the
+            # villager as the interactable_villager variable.
             try:
                 interactable_villager = None
                 # Check if in range of villager
@@ -2598,6 +2704,9 @@ class GameView(arcade.View):
                 pass
             try:        
                 # Check for interaction with villager
+                # If interacted and quest not started yet start
+                # the quest. Otherwise check if the quest is done
+                # or if the quest is done just wave instead.
                     if self.interact:
                         for villager in self.scene[LAYER_NAME_VILLAGERS]:
                             if villager.id == interactable_villager:
@@ -2616,6 +2725,9 @@ class GameView(arcade.View):
                 pass
 
         # Check if interaction possible with door
+        # If close enough to door interaction is possible.
+        # Set the interactable_door variable to whatever door position
+        # is the closed to the player.
         for id, info in self.doors.items():
             if (
                 calculate_distance(self.player_sprite.position, info["pos"])
@@ -2633,6 +2745,9 @@ class GameView(arcade.View):
             and self.can_interact 
             and self.interactable_door != None
             ):
+            # If the door requires no key, setup the level,
+            # spawnpoint, disable the interact action and setup the
+            # sublevel.
             if self.doors[self.interactable_door]["key_req"] == "None":
                 self.level = self.doors[self.interactable_door]["warp"]
                 self.spawnpoint = self.doors[self.interactable_door]["dest"]
@@ -2640,6 +2755,7 @@ class GameView(arcade.View):
                 self.setup()
                 return
             else:
+                # Check if the player has the key.
                 has_key = False
                 for item in self.inventory_other.values():
                     if (
@@ -2651,6 +2767,8 @@ class GameView(arcade.View):
                         has_key = True
                         break
                 if has_key:
+                    # If the player has the key also setup the
+                    # spawnpoint, spawn position, and stop interacting.
                     self.level = self.doors[self.interactable_door]["warp"]
                     self.spawnpoint = self.doors[
                         self.interactable_door
@@ -2659,9 +2777,11 @@ class GameView(arcade.View):
                     self.setup()
                     return
                 else:
+                    # Otherwise the key is missing and the key missing
+                    # text is drawn above the player.
                     self.missing_key_text = MISSING_KEY_TIME
                             
-        # Check if interaction possible with statue
+        # Check if interaction possible with statue (not current).
         try:
             if (
                 len(
@@ -2677,13 +2797,26 @@ class GameView(arcade.View):
             pass
         
 
-        # Check for collisions with the statue
+        # Check for collisions with the statue.
+        # The player can only interact with the statue if they're
+        # colliding.
+        # If there are no statues in the scene ignore this code.
         try:
             if self.interact:
                 player_collision_list = arcade.check_for_collision_with_list(
                     self.player_sprite, self.scene[LAYER_NAME_STATUES]
                     )
                 for collision in player_collision_list:
+                    # If there is an available statue, set the
+                    # spawnpoint to that statue and set energy up to
+                    # three. (Must be within a certain distance to
+                    # interact)
+                    # The spawnpoint works by storing the previous
+                    # spawnpoint statue in the self.prev_spawnpoint,
+                    # and after interacting with a new statue that
+                    # statue is moved back to the "Statues" layer,
+                    # while the new statue is moved from the "Statues"
+                    # layer into the "Current Statue" layer.
                     if self.prev_spawnpoint != None:
                         self.scene[LAYER_NAME_STATUES].append(
                             self.prev_spawnpoint
@@ -2719,6 +2852,7 @@ class GameView(arcade.View):
 
         # Check for collisions with energy orbs.
         # Only register if the player still has room to gain energy.
+        # Try except still works the same as before.
         try:
             if self.energy < MAX_ENERGY:
                 player_collision_list = arcade.check_for_collision_with_list(
@@ -2732,15 +2866,22 @@ class GameView(arcade.View):
             pass
         
         # Check for collisions with keys or secrets
+        # All try-excepts in this general area work the same,
+        # where if the layer exists in the scene the code runs,
+        # but if the layer doesn't exist the code is ignored.
         try:
             player_collision_list = arcade.check_for_collision_with_list(
                 self.player_sprite, self.scene[LAYER_NAME_COLLECTIBLES]
                 )
             for collision in player_collision_list:
                 if collision.type == "Key":
+                    # If key collected then remove key from scene and
+                    # add the key ID to the lst of keys obtained.
                     self.keys_obtained.append(collision.id)
                     self.scene[LAYER_NAME_COLLECTIBLES].remove(collision)
                 if collision.type == "Secret":
+                    # If secret collected then remove secret from scene
+                    # and add the name to the secrets found list.
                     self.secret_found_text = SECRET_FOUND_TIME
                     self.secrets_found.append(collision.name)
                     self.scene[LAYER_NAME_COLLECTIBLES].remove(collision)
@@ -2754,6 +2895,10 @@ class GameView(arcade.View):
                 self.player_sprite, self.scene[LAYER_NAME_LOCKED_DOORS]
                 )
             for collision in player_collision_list:
+                # If the ID of the door is in the keys obtained list,
+                # open the door by moving the thin barrier from a wall
+                # layer to a transparent layer and change the texture
+                # of the door from closed to open.
                 if str(collision.id) in self.keys_obtained:
                     for door_barrier in self.scene[
                         LAYER_NAME_DOOR_BARRIERS_CLOSED
@@ -2766,6 +2911,11 @@ class GameView(arcade.View):
                             )
                     collision.open = True
                 else:
+                    # If no door ID in the keys obtained list,
+                    # display the missing key text above the player.
+                    # Also move the door barrier from the transparent
+                    # layer to the wall layer so that the player
+                    # cannot get past.
                     self.missing_key_text = MISSING_KEY_TIME
                     for door_barrier in self.scene[
                         LAYER_NAME_DOOR_BARRIERS_OPEN
@@ -2781,6 +2931,10 @@ class GameView(arcade.View):
             pass
 
         # Quest item collision processing
+        # This checks all of the current quests
+        # and checks which quest items are needed.
+        # Also stores the ID of the quest which needs the item
+        # that is being checked.
         if self.in_quest:
             quest_req_apples = False
             quest_req_cards = False
@@ -2812,6 +2966,9 @@ class GameView(arcade.View):
                     self.player_sprite, self.scene[LAYER_NAME_COLLECTIBLES]
                     )
                 for collision in player_collision_list:
+                    # For all quest items reference the inventory
+                    # ID corresponding to that quest and add one to the
+                    # quest item belonging to the quest.
                     if quest_req_apples:
                         # Check for collisions with apples
                         if collision.type == "Apple":
@@ -2862,6 +3019,8 @@ class GameView(arcade.View):
 
 
         # Update energy bar
+        # Change the texture of the energy bar to the corresponding
+        # energy level.
         try:
             for energy_bar in self.gui_scene[LAYER_NAME_ENERGY]:
                 energy_bar.texture = arcade.load_texture(
@@ -2878,6 +3037,9 @@ class GameView(arcade.View):
                 )
             for collision in knife_collision_list:
                 if collision.can_kill:
+                    # If the enemy is killable remove enemy
+                    # from the scene and add one to the drop
+                    # in the inventory.
                     for id, info in self.inventory_quest.items():
                         if collision.drop == info["name"]:
                             self.inventory_quest[id]["number"] += (
@@ -2905,6 +3067,7 @@ class GameView(arcade.View):
             pass
 
         # Update health bar
+        # Change health bar texture to the current health level.
         try:
             for health_bar in self.gui_scene[LAYER_NAME_HEALTH]:
                 health_bar.texture = arcade.load_texture(
@@ -2916,6 +3079,7 @@ class GameView(arcade.View):
         # Reveal tunnels/cave when player approaches
         try:
             for tile in self.scene[LAYER_NAME_CAVE]:
+                # Calculate distance from player to each cave tile.
                 distance_to_player = calculate_distance(
                     [
                         self.player_sprite.center_x, 
@@ -2923,6 +3087,12 @@ class GameView(arcade.View):
                         ], 
                     [tile.center_x, tile.center_y]
                     )
+                # If the distance is less than the upper bound
+                # start revealing the blocks underneath by reducing
+                # the opacity based on the proportion of current
+                # distance against the upper bound.
+                # If the distance is less than the lower bound,
+                # Make the block fully transparent.
                 if (
                     distance_to_player 
                     < 
@@ -2961,11 +3131,13 @@ class GameView(arcade.View):
                 self.tile_map.tile_height 
                 * TILE_SCALING * self.spawnpoint[Y_POS]
                 )
-            
+            # This resets the dying state to not dying.
             self.player_sprite.dying = False
 
         # Check for collision with death layer (spikes etc)
         try:
+            # If the player hits a spike immediately start the
+            # death animation.
             if (
                 len(
                 arcade.check_for_collision_with_list(
@@ -2979,7 +3151,8 @@ class GameView(arcade.View):
         except:
             pass
         
-        # Run player death animation
+        # Run player death animation if the player jumps off the edge
+        # or runs out of health.
         if (
             self.player_sprite.center_y < ORIGIN[Y_POS]
             or 
@@ -2990,12 +3163,16 @@ class GameView(arcade.View):
             
             self.player_sprite.is_dead = True
         
+        # Once the player dies reset their speed and
+        # health/energy.
         if self.player_sprite.is_dead:
             self.health = MAX_HEALTH
             self.energy = MAX_ENERGY
             self.fly_speed = STATIONARY
 
-            
+        # If there are quests in the current quest list
+        # set the in_quest state to True,
+        # otherwise set it to False.
         if len(self.quests) > NOTHING:
             self.in_quest = True
         else:
@@ -3010,7 +3187,11 @@ class GameView(arcade.View):
         if self.not_complete_time > NOTHING:
             self.not_complete_time -= delta_time
         else:
+            # Once the checking quest text disappears
+            # clear the check_quest variable which stores
+            # the current quest being checked.
             self.not_complete_time = NOTHING
+            self.check_quest = None
 
         if self.missing_key_text > NOTHING:
             self.missing_key_text -= delta_time
@@ -3050,34 +3231,46 @@ class GameView(arcade.View):
             pass
 
         # Check for collision with goal/warp portal
+        # This moves the player to the next main level.
         try:
             player_collision_list = arcade.check_for_collision_with_list(
                 self.player_sprite, self.scene[LAYER_NAME_GOAL]
                 )
             for collision in player_collision_list:
+                # If the destination level is 4 end the game and show
+                # the end screen.
                 if collision.warp == "4":
                     end_view = EndScreen()
                     self.window.show_view(end_view)
                 else:
+                    # Otherwise teleport the player to the next level
+                    # and run the setup, placing the player at the
+                    # target position.
                     self.level = collision.warp
                     self.spawnpoint = collision.dest
                     self.setup()
+                # Once this code runs the update code should stop
+                # running and everything resets for the start of the
+                # next level.
                 return
         except:
             pass
+        
+        # Center the camera on the player.
         self.center_camera_to_player()
 
 # Main Program
 
 def main():
     """Main Function"""
+    # Set the first view shown to the MainMenu() view.
+    # Display the view and start the game.
     window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
     start_view = MainMenu()
     window.show_view(start_view)
-    #start_view.setup()
     arcade.run()
 
 # Things that run
-
+# Run the game only if this file is the main program.
 if __name__ == "__main__":
     main()
