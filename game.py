@@ -1,38 +1,99 @@
-import arcade, os, random, math
+# Import all modules/libraries required to run the code.
+import arcade, os, math
 
 # Defining constants
-
+# This specifies the absolute path to the game folder on the user's
+# machine. This will prevent any path errors caused by using relative
+# paths.
 MAIN_PATH = os.path.dirname(os.path.abspath(__file__))
 
 # Window Settings
-SCREEN_WIDTH = 1920
-SCREEN_HEIGHT = 1080
-SCREEN_TITLE = "Ataraxia V1"
+# Constants that store window dimensions and window name.
+# ONE_BLOCK refers to cases where a distance of one ingame block is
+# needed.
+# HALF_BLOCK is the same concept but when half a block is needed,
+# or half of a full length.
+# INTERACT_TEXT_POS refers to the percentage along the screen the
+# "Can interact" text should be placed. 
+SCREEN_WIDTH = 1280
+SCREEN_HEIGHT = 720
+SCREEN_TITLE = "Ataraxia"
 HALF_BLOCK = 0.5
+ONE_BLOCK = 1
+INTERACT_TEXT_POS = 0.8
 
 # Colours
+# These constants store the various colours needed in the game.
+# These include uses such as background colour and text colour.
+# MAX_OPACITY is used as a standard to adjust the opacity of certain
+# tiles based on distance later.
 SKY_BLUE = (99, 245, 255)
 STONE_GREY = (158, 158, 158)
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 MENU_BACKGROUND = (188, 188, 255)
+MAX_OPACITY = 255
 
 # Font sizes
+# These constants store the font of the various texts that are drawn
+# on the screen.
+# CHAR_WIDTH refers to the approximate width of each character in the
+# font range 14-18
 TIPS_FONT = 14
-DIALOGUE_FONT = 16
+DIALOGUE_FONT = 15
+INTERACT_FONT = 18
+QUEST_FONT = 20
+CHAR_WIDTH = 10
+
+# Background rectangle sizes
+# These constants determine the dimensions and features of the
+# background rectangles behind the popup texts.
+# The purpose of these rectangles is to improve contrast and thus
+# readability between the text and the background, by applying a solid
+# directly contrasting background colour behind the text.
+# RECT_HEIGHT is the height of the rectangle which can fit one line
+# of text.
+# INTERACT_Y_OFFSET is the y-position of the "can interact" text and
+# the background rectangle behind it.
+# QUEST_OFFSET is the distance (in tiles) from the right edge and
+# top edge of the screen respectively of the first line of quest 
+# criteria.
+# QUEST_Y_GAP is the distance (in tiles) between each quest criteria
+# line.
+RECT_HEIGHT = 25
+QUEST_RECT_HEIGHT = 30
+QUEST_COMPLETE_RECT_WIDTH = 280
+QUEST_INCOMPLETE_RECT_WIDTH = 380
+KEY_MISSING_RECT_WIDTH = 125
+SECRET_FOUND_RECT_WIDTH = 125
+INTERACT_RECT_WIDTH = 200
+INTERACT_Y_OFFSET = 50
+QUEST_RECT_WIDTH = 250
+QUEST_OFFSET = [24, 60]
+QUEST_Y_GAP = 9
 
 # Sprite Scaling
+# These constants scale the various sprites in the game,
+# such as characters (player, enemies, villagers),
+# tiles, collectibles (quest items, orbs, keys),
+# and the knife sprite in particular.
 CHARACTER_SCALING = 5
 TILE_SCALING = 5
 COLLECTIBLE_SCALING = 2
 KNIFE_SCALING = 3
 
 # Sprite facing direction
+# These sprites are used to determine the facing direction of the
+# sprites.
+# The specific numbers are the indices of the list returned by the 
+# load_texture_pair function, which returns the original image
+# (usually right-facing) first, and the mirrored image second.
 RIGHT_FACING = 0
 LEFT_FACING = 1
 
 # Sprite animation multipliers
-# These determine how many frames it takes to update texture once.
+# These determine how many frames it takes to update the texture once
+# for each sprite and animation specified in the dictionary.
 ANIM_MULT = {
     "Player1": {
         "Idle": 8,
@@ -64,22 +125,46 @@ ANIM_MULT = {
 }
 
 # Miscellaneous Constants
+# These are extra constants that don't really fit under the other
+# categories.
+# FIRST_TEXTURE is used when the first texture in an animation is
+# needed. 
+# UNIT_INCREMENT is used when incrementing a variable by 1, whether
+# it be updating a counter, increasing inventory, or decreasing stats.
+# FIRST_VALUE is similar to FIRST_TEXTURE except that it's a more
+# general "initial value", such as when resetting a counter or
+# accessing the first index of a non-texture list.
+# INDEX_OFFSET is the conversion for list indices (0, 1, 2) to counting
+# indices (1, 2, 3).
+# FRAMERATE is the framerate that we want the game to run at,
+# and CAMERA_TRACK_SPEED is the speed at which the camera should center
+# on the player when the player moves (pixels/sec).
+# NOTHING is the most versatile constant. It can mean "nothing",
+# "none", "empty", or 0 in a timer.
 FIRST_TEXTURE = 0
 UNIT_INCREMENT = 1
+FIRST_VALUE = 0
 INDEX_OFFSET = 1
 FRAMERATE = 1 / 60
+CAMERA_TRACK_SPEED = 0.2
+NOTHING = 0
 
 # Level categories
+# These constants place the levels and sublevels into two categories.
+# These are used to determine the background colour of the level.
 GROUND_LEVELS = ["1.1", "3.1"]
 CAVE_LEVELS = ["2.1", "2.2"]
 
 # Layer names
 # Character Layers
+# Fairly self explanatory.
 LAYER_NAME_PLAYER = "Player"
 LAYER_NAME_VILLAGERS = "Villagers"
 LAYER_NAME_ENEMIES = "Enemies"
 
 # Object Layers
+# These are the physical objects that are defined as objects in Tiled
+# or are created within the program.
 LAYER_NAME_ORBS = "Orbs"
 LAYER_NAME_TEXT = "Text"
 LAYER_NAME_COLLECTIBLES = "Collectibles"
@@ -89,6 +174,8 @@ LAYER_NAME_KNIFE = "Knife"
 LAYER_NAME_GOAL = "Goal"
 
 # Tile Layers
+# These are the names of the tile layers that are read directly
+# from the Tiled map files.
 LAYER_NAME_PLATFORMS = "Platforms"
 LAYER_NAME_MOVING_PLATFORMS = "Moving Platforms"
 LAYER_NAME_LADDERS = "Ladders"
@@ -101,44 +188,74 @@ LAYER_NAME_DOOR_BARRIERS_OPEN = "Door Barrier Open"
 LAYER_NAME_DOOR_BARRIERS_CLOSED = "Door Barrier Closed"
 
 # GUI Layers
+# These are the layers which are added to the GUI scene,
+# which is drawn separately from the game scene.
+# These are used for the energy and health bars respectively.
 LAYER_NAME_ENERGY = "Energy"
 LAYER_NAME_HEALTH = "Health"
 
 # GUI Layer info
+# These specify the position of the energy and health bars relative
+# to the top right corner of the screen (in tiles).
 ENERGY_BAR_OFFSET = [32, 48]
 HEALTH_BAR_OFFSET = [32, 27]
 
 # Physics things
+# Most are quite self-explanatory.
+# PLAYER_THRUST is the flight speed of the flying player character.
+# GROUND_DISTANCE is the maximum distance (in pixels) the ground can be
+# from the player before they can jump.
+# GRAV_MULT is the downwards acceleration multiplier of the flying
+# player shape. This has been determined experimentally from playtest.
 GRAVITY = 1
 PLAYER_WALK_SPEED = 10
 PLAYER_RUN_SPEED = 15
 PLAYER_JUMP_SPEED = 20
 PLAYER_THRUST = 10
+GROUND_DISTANCE = 10
+GRAV_MULT = 4
 
 # Player spawnpoints
+# This is where the player spawns at the start of the first level.
 PLAYER_START_X = 3
 PLAYER_START_Y = 18
 
 # Player characteristics
+# These are the traits of the player such as the shape,
+# max health, and max energy.
 PLAYER_SHAPE_HUMAN = 0
 PLAYER_SHAPE_DOG = 1
 PLAYER_SHAPE_BLAZE = 2
 MAX_HEALTH = 3
 MAX_ENERGY = 3
-NOTHING = 0
 
 # Enemy characteristics
+# These are the moving speeds of the enemies split by type.
 WRAITH_SPEED = 5
 BIRD_SPEED = 20
 
 # Kinematic constants
+# Pretty self-explanatory,
+# START_CLIMB is the minimum vertical speed before the player
+# starts doing the climbing animation and physics when on a ladder.
 STATIONARY = 0
 START_CLIMB = 1
 X_POS = 0
 Y_POS = 1
+ORIGIN = [0, 0]
 
 # Timing constants
 KNIFE_COOLDOWN = 0.5
+HIT_COOLDOWN = 1
+QUEST_INCOMPLETE_TIME = 2
+QUEST_COMPLETE_TIME = 2
+MISSING_KEY_TIME = 2
+SECRET_FOUND_TIME = 2
+
+# Sensing constants
+MIN_STATUE_DIST = 2
+CAVE_REVEAL_DIST = 10
+CAVE_TRNSPT_DIST = 5
 
 # Volume constants
 MUSIC_VOLUME = 0.3
@@ -789,7 +906,7 @@ class PlayerCharacter(Entity):
         if (
             self.cur_texture 
             > 
-            self.idle_frames*ANIM_MULT["Player1"]["Walk"]
+            self.walk_frames*ANIM_MULT["Player1"]["Walk"]
             -INDEX_OFFSET
             ):
             self.cur_texture = FIRST_TEXTURE
@@ -1590,18 +1707,22 @@ class GameView(arcade.View):
             try:
                 if self.latest_quest["dialogue_time"] > NOTHING:
                     arcade.draw_rectangle_filled(
-                        self.latest_quest["villager_pos"][0],
-                        self.latest_quest["villager_pos"][1]+1.5*TILE_SCALING*self.tile_map.tile_width,
-                        len(self.start_dialogue)*10+10,
-                        20,
+                        self.latest_quest["villager_pos"][X_POS],
+                        (self.latest_quest["villager_pos"][Y_POS]
+                         +(ONE_BLOCK+HALF_BLOCK)
+                         *TILE_SCALING*self.tile_map.tile_width),
+                        len(self.start_dialogue)*CHAR_WIDTH+CHAR_WIDTH,
+                        RECT_HEIGHT,
                         WHITE,
                     )
                     arcade.draw_text(
                         self.start_dialogue,
-                        self.latest_quest["villager_pos"][0],
-                        self.latest_quest["villager_pos"][1]+1.5*TILE_SCALING*self.tile_map.tile_width,
+                        self.latest_quest["villager_pos"][X_POS],
+                        (self.latest_quest["villager_pos"][Y_POS]
+                         +(ONE_BLOCK+HALF_BLOCK)
+                         *TILE_SCALING*self.tile_map.tile_width),
                         BLACK,
-                        15,
+                        DIALOGUE_FONT,
                         anchor_x="center",
                         anchor_y="center",
                     )
@@ -1609,78 +1730,94 @@ class GameView(arcade.View):
                 pass
         
         # If quest not complete then draw this
-        if self.not_complete_time > 0:
+        if self.not_complete_time > NOTHING:
             arcade.draw_rectangle_filled(
-                self.check_quest["villager_pos"][0],
-                self.check_quest["villager_pos"][1]+1.5*TILE_SCALING*self.tile_map.tile_width,
-                380,
-                20,
+                self.check_quest["villager_pos"][X_POS],
+                (self.check_quest["villager_pos"][Y_POS]
+                 +(ONE_BLOCK+HALF_BLOCK)
+                 *TILE_SCALING*self.tile_map.tile_width),
+                QUEST_INCOMPLETE_RECT_WIDTH,
+                RECT_HEIGHT,
                 WHITE
             )
             arcade.draw_text(
                 "Bruh you're not done yet",
-                self.check_quest["villager_pos"][0],
-                self.check_quest["villager_pos"][1]+1.5*TILE_SCALING*self.tile_map.tile_width,
+                self.check_quest["villager_pos"][X_POS],
+                (self.check_quest["villager_pos"][Y_POS]
+                 +(ONE_BLOCK+HALF_BLOCK)
+                 *TILE_SCALING*self.tile_map.tile_width),
                 BLACK,
-                15,
+                DIALOGUE_FONT,
                 anchor_x="center",
                 anchor_y="center",
             )
 
         # If quest complete draw this
         if self.finished_quest != None:
-            if self.finished_quest["dialogue_time"] > 0:
+            if self.finished_quest["dialogue_time"] > NOTHING:
                 arcade.draw_rectangle_filled(
-                    self.finished_quest["villager_pos"][0],
-                    self.finished_quest["villager_pos"][1]+1.5*TILE_SCALING*self.tile_map.tile_width,
-                    280,
-                    35,
+                    self.finished_quest["villager_pos"][X_POS],
+                    (self.finished_quest["villager_pos"][Y_POS]
+                     +(ONE_BLOCK+HALF_BLOCK)
+                     *TILE_SCALING*self.tile_map.tile_width),
+                    QUEST_COMPLETE_RECT_WIDTH,
+                    RECT_HEIGHT,
                     WHITE,
                 )
                 arcade.draw_text(
                     "Thanks, here is your reward",
-                    self.finished_quest["villager_pos"][0],
-                    self.finished_quest["villager_pos"][1]+1.5*TILE_SCALING*self.tile_map.tile_width,
+                    self.finished_quest["villager_pos"][X_POS],
+                    (self.finished_quest["villager_pos"][Y_POS]
+                     +(ONE_BLOCK+HALF_BLOCK)
+                     *TILE_SCALING*self.tile_map.tile_width),
                     BLACK,
-                    15,
+                    DIALOGUE_FONT,
                     anchor_x="center",
                     anchor_y="center",
                 )
 
         # If key missing draw this
-        if self.missing_key_text > 0:
+        if self.missing_key_text > NOTHING:
             arcade.draw_rectangle_filled(
                 self.player_sprite.center_x,
-                self.player_sprite.center_y+1.5*TILE_SCALING*self.tile_map.tile_height,
-                125,
-                20,
+                (self.player_sprite.center_y+
+                 (ONE_BLOCK+HALF_BLOCK)
+                 *TILE_SCALING*self.tile_map.tile_height),
+                KEY_MISSING_RECT_WIDTH,
+                RECT_HEIGHT,
                 WHITE,
             )
             arcade.draw_text(
                 "Missing key",
                 self.player_sprite.center_x,
-                self.player_sprite.center_y+1.5*TILE_SCALING*self.tile_map.tile_height,
+                (self.player_sprite.center_y
+                 +(ONE_BLOCK+HALF_BLOCK)
+                 *TILE_SCALING*self.tile_map.tile_height),
                 BLACK,
-                15,
+                DIALOGUE_FONT,
                 anchor_x = "center",
                 anchor_y="center"
             )
 
         # If secret found then draw this
-        if self.secret_found_text > 0:
+        if self.secret_found_text > NOTHING:
             arcade.draw_rectangle_filled(
                 self.player_sprite.center_x,
-                self.player_sprite.center_y+1.5*TILE_SCALING*self.tile_map.tile_height,
-                125,
-                20,
+                (self.player_sprite.center_y
+                 +(ONE_BLOCK+HALF_BLOCK)
+                 *TILE_SCALING*self.tile_map.tile_height),
+                SECRET_FOUND_RECT_WIDTH,
+                RECT_HEIGHT,
                 WHITE,
             )
             arcade.draw_text(
                 "Secret Found",
                 self.player_sprite.center_x,
-                self.player_sprite.center_y+1.5*TILE_SCALING*self.tile_map.tile_height,
+                (self.player_sprite.center_y
+                 +(ONE_BLOCK+HALF_BLOCK)
+                 *TILE_SCALING*self.tile_map.tile_height),
                 BLACK,
-                15,
+                DIALOGUE_FONT,
                 anchor_x = "center",
                 anchor_y="center"
             )
@@ -1696,46 +1833,47 @@ class GameView(arcade.View):
         # If interact is possible then draw this text
         if self.can_interact:
             arcade.draw_rectangle_filled(
-                SCREEN_WIDTH*0.8,
-                50,
-                200,
-                20,
+                SCREEN_WIDTH*INTERACT_TEXT_POS,
+                INTERACT_Y_OFFSET,
+                INTERACT_RECT_WIDTH,
+                RECT_HEIGHT,
                 BLACK,
             )
             arcade.draw_text(
                 "Press 'f' to interact",
-                SCREEN_WIDTH*0.8,
-                50,
+                SCREEN_WIDTH*INTERACT_TEXT_POS,
+                INTERACT_Y_OFFSET,
                 WHITE,
-                18,
+                INTERACT_FONT,
                 anchor_x="center",
                 anchor_y="center"
             )
         
         # If in quest then draw the current quest progress
         if self.in_quest:
-            count = 0
+            count = FIRST_VALUE
             for id, info in self.quests.items():
                 arcade.draw_rectangle_filled(
-                    SCREEN_WIDTH-24*TILE_SCALING,
-                    SCREEN_HEIGHT-(60+count*9)*TILE_SCALING,
-                    250,
-                    30,
+                    SCREEN_WIDTH-QUEST_OFFSET[X_POS]*TILE_SCALING,
+                    (SCREEN_HEIGHT-(QUEST_OFFSET[Y_POS]+count*QUEST_Y_GAP)
+                     *TILE_SCALING),
+                    QUEST_RECT_WIDTH,
+                    QUEST_RECT_HEIGHT,
                     WHITE
                 )
                 arcade.draw_text(
-                    f"{info['quest_item']}: {self.inventory_quest[id]['number']}/{info['num_needed']}",
-                    SCREEN_WIDTH-24*TILE_SCALING,
-                    SCREEN_HEIGHT-(60+count*9)*TILE_SCALING,
+                    (f"{info['quest_item']}: "
+                    +f"{self.inventory_quest[id]['number']}/"
+                    +f"{info['num_needed']}"),
+                    SCREEN_WIDTH-QUEST_OFFSET[X_POS]*TILE_SCALING,
+                    (SCREEN_HEIGHT-(QUEST_OFFSET[Y_POS]+count*QUEST_Y_GAP)
+                     *TILE_SCALING),
                     BLACK,
-                    20,
+                    QUEST_FONT,
                     anchor_x="center",
                     anchor_y="center"
                 )
-                count += 1
-        
-        
-        
+                count += UNIT_INCREMENT
         
     def process_keychange(self):
         """
@@ -1745,11 +1883,11 @@ class GameView(arcade.View):
         if self.up_pressed and not self.down_pressed:
             if self.physics_engine.is_on_ladder():
                 self.player_sprite.change_y = PLAYER_WALK_SPEED
-            elif self.shape == 2:
+            elif self.shape == PLAYER_SHAPE_BLAZE:
                 self.fly_speed += (self.thrust - GRAVITY)*self.delta_time
             else:
                 if (
-                    self.physics_engine.can_jump(y_distance=10)
+                    self.physics_engine.can_jump(y_distance=GROUND_DISTANCE)
                     and not self.jump_needs_reset
                 ):
                     self.player_sprite.change_y = PLAYER_JUMP_SPEED
@@ -1757,15 +1895,18 @@ class GameView(arcade.View):
         elif self.down_pressed and not self.up_pressed:
             if self.physics_engine.is_on_ladder():
                 self.player_sprite.change_y = -PLAYER_WALK_SPEED
-            elif self.shape == 2:
-                self.fly_speed -= (self.thrust + 4*GRAVITY)*self.delta_time
+            elif self.shape == PLAYER_SHAPE_BLAZE:
+                self.fly_speed -= (
+                    (self.thrust + GRAV_MULT*GRAVITY)
+                    *self.delta_time
+                    )
 
         # Process up/down when on a ladder and no movement
         if self.physics_engine.is_on_ladder():
             if not self.up_pressed and not self.down_pressed:
-                self.player_sprite.change_y = 0
+                self.player_sprite.change_y = STATIONARY
             elif self.up_pressed and self.down_pressed:
-                self.player_sprite.change_y = 0
+                self.player_sprite.change_y = STATIONARY
 
         # Process left/right
         if self.right_pressed and not self.left_pressed:
@@ -1773,18 +1914,18 @@ class GameView(arcade.View):
         elif self.left_pressed and not self.right_pressed:
             self.player_sprite.change_x = -PLAYER_WALK_SPEED
         else:
-            self.player_sprite.change_x = 0
+            self.player_sprite.change_x = STATIONARY
 
     def on_key_press(self, key, modifiers):
         """Called whenever a key is pressed."""
 
         if key == arcade.key.UP or key == arcade.key.W:
             self.up_pressed = True
-            if self.shape == 2:
+            if self.shape == PLAYER_SHAPE_BLAZE:
                 self.is_flying = True
         elif key == arcade.key.DOWN or key == arcade.key.S:
             self.down_pressed = True
-            if self.shape == 2:
+            if self.shape == PLAYER_SHAPE_BLAZE:
                 self.is_flying = True
         elif key == arcade.key.LEFT or key == arcade.key.A:
             self.left_pressed = True
@@ -1794,15 +1935,18 @@ class GameView(arcade.View):
         if key == arcade.key.F:
             self.interact = True
 
-        if self.energy >= 3:
-            if key == arcade.key.KEY_1 and self.shape != 0:
-                player_pos = (self.player_sprite.center_x, self.player_sprite.center_y)
-                self.shape = 0
-                self.energy -= 3
+        if self.energy >= MAX_ENERGY:
+            if key == arcade.key.KEY_1 and self.shape != PLAYER_SHAPE_HUMAN:
+                player_pos = (
+                    self.player_sprite.center_x, 
+                    self.player_sprite.center_y
+                    )
+                self.shape = PLAYER_SHAPE_HUMAN
+                self.energy -= MAX_ENERGY
                 self.scene[LAYER_NAME_PLAYER].remove(self.player_sprite)
                 self.player_sprite = PlayerCharacter(self.shape)
-                self.player_sprite.center_x = player_pos[0]
-                self.player_sprite.center_y = player_pos[1]
+                self.player_sprite.center_x = player_pos[X_POS]
+                self.player_sprite.center_y = player_pos[Y_POS]
 
                 self.scene.add_sprite(LAYER_NAME_PLAYER, self.player_sprite)
                 try:
@@ -1811,7 +1955,10 @@ class GameView(arcade.View):
                         platforms=self.scene[LAYER_NAME_MOVING_PLATFORMS],
                         gravity_constant=GRAVITY,
                         ladders=self.scene[LAYER_NAME_LADDERS],
-                        walls=[self.scene[LAYER_NAME_PLATFORMS], self.scene[LAYER_NAME_DOOR_BARRIERS_CLOSED]],
+                        walls=[
+                            self.scene[LAYER_NAME_PLATFORMS], 
+                            self.scene[LAYER_NAME_DOOR_BARRIERS_CLOSED]
+                            ],
                     )
                 except:
                     self.physics_engine = arcade.PhysicsEnginePlatformer(
@@ -1821,14 +1968,17 @@ class GameView(arcade.View):
                         ladders=self.scene[LAYER_NAME_LADDERS],
                         walls=self.scene[LAYER_NAME_PLATFORMS],
                     )
-            if key == arcade.key.KEY_2 and self.shape != 1:
-                player_pos = (self.player_sprite.center_x, self.player_sprite.center_y)
-                self.shape = 1
-                self.energy -= 3
+            if key == arcade.key.KEY_2 and self.shape != PLAYER_SHAPE_DOG:
+                player_pos = (
+                    self.player_sprite.center_x, 
+                    self.player_sprite.center_y
+                    )
+                self.shape = PLAYER_SHAPE_DOG
+                self.energy -= MAX_ENERGY
                 self.scene[LAYER_NAME_PLAYER].remove(self.player_sprite)
                 self.player_sprite = PlayerCharacter(self.shape)
-                self.player_sprite.center_x = player_pos[0]
-                self.player_sprite.center_y = player_pos[1]
+                self.player_sprite.center_x = player_pos[X_POS]
+                self.player_sprite.center_y = player_pos[Y_POS]
 
                 self.scene.add_sprite(LAYER_NAME_PLAYER, self.player_sprite)
                 try:
@@ -1836,7 +1986,10 @@ class GameView(arcade.View):
                         self.player_sprite,
                         platforms=self.scene[LAYER_NAME_MOVING_PLATFORMS],
                         gravity_constant=GRAVITY,
-                        walls=[self.scene[LAYER_NAME_PLATFORMS], self.scene[LAYER_NAME_DOOR_BARRIERS_CLOSED]],
+                        walls=[
+                            self.scene[LAYER_NAME_PLATFORMS], 
+                            self.scene[LAYER_NAME_DOOR_BARRIERS_CLOSED]
+                            ],
                     )
                 except:
                     self.physics_engine = arcade.PhysicsEnginePlatformer(
@@ -1845,14 +1998,17 @@ class GameView(arcade.View):
                         gravity_constant=GRAVITY,
                         walls=self.scene[LAYER_NAME_PLATFORMS],
                     )
-            if key == arcade.key.KEY_3 and self.shape != 2:
-                player_pos = (self.player_sprite.center_x, self.player_sprite.center_y)
-                self.shape = 2
-                self.energy -= 3
+            if key == arcade.key.KEY_3 and self.shape != PLAYER_SHAPE_BLAZE:
+                player_pos = (
+                    self.player_sprite.center_x, 
+                    self.player_sprite.center_y
+                    )
+                self.shape = PLAYER_SHAPE_BLAZE
+                self.energy -= MAX_ENERGY
                 self.scene[LAYER_NAME_PLAYER].remove(self.player_sprite)
                 self.player_sprite = PlayerCharacter(self.shape)
-                self.player_sprite.center_x = player_pos[0]
-                self.player_sprite.center_y = player_pos[1]
+                self.player_sprite.center_x = player_pos[X_POS]
+                self.player_sprite.center_y = player_pos[Y_POS]
 
                 self.scene.add_sprite(LAYER_NAME_PLAYER, self.player_sprite)
                 try:
@@ -1860,7 +2016,10 @@ class GameView(arcade.View):
                         self.player_sprite,
                         platforms=self.scene[LAYER_NAME_MOVING_PLATFORMS],
                         gravity_constant=GRAVITY,
-                        walls=[self.scene[LAYER_NAME_PLATFORMS], self.scene[LAYER_NAME_DOOR_BARRIERS_CLOSED]],
+                        walls=[
+                            self.scene[LAYER_NAME_PLATFORMS], 
+                            self.scene[LAYER_NAME_DOOR_BARRIERS_CLOSED]
+                            ],
                     )
                 except:
                     self.physics_engine = arcade.PhysicsEnginePlatformer(
@@ -1870,15 +2029,29 @@ class GameView(arcade.View):
                         walls=self.scene[LAYER_NAME_PLATFORMS],
                     )
 
-        if key == arcade.key.Q:
-            if self.energy < 3:
-                self.energy += 1
+        #if key == arcade.key.Q:
+        #    if self.energy < MAX_ENERGY:
+        #        self.energy += 1
 
         if key == arcade.key.R:
-            self.player_sprite.center_x = self.tile_map.tile_width * TILE_SCALING * PLAYER_START_X
-            self.player_sprite.center_y = self.tile_map.tile_height * TILE_SCALING * PLAYER_START_Y
+            self.player_sprite.center_x = (
+                self.tile_map.tile_width 
+                * TILE_SCALING 
+                * PLAYER_START_X
+                )
+            self.player_sprite.center_y = (
+                self.tile_map.tile_height 
+                * TILE_SCALING 
+                * PLAYER_START_Y
+                )
         
-        if key == arcade.key.Z and self.inventory_other["002"]["number"] > 0 and self.can_knife:
+        if (
+            key == arcade.key.Z 
+            and 
+            self.inventory_other["002"]["number"] > NOTHING 
+            and 
+            self.can_knife
+            ):
             self.swing_knife = True
         self.process_keychange()
 
@@ -1888,11 +2061,11 @@ class GameView(arcade.View):
         if key == arcade.key.UP or key == arcade.key.W:
             self.up_pressed = False
             self.jump_needs_reset = False
-            if self.shape == 2:
+            if self.shape == PLAYER_SHAPE_BLAZE:
                 self.is_flying = False
         elif key == arcade.key.DOWN or key == arcade.key.S:
             self.down_pressed = False
-            if self.shape == 2:
+            if self.shape == PLAYER_SHAPE_BLAZE:
                 self.is_flying = False
         elif key == arcade.key.LEFT or key == arcade.key.A:
             self.left_pressed = False
@@ -1902,24 +2075,44 @@ class GameView(arcade.View):
         if key == arcade.key.F:
             self.interact = False
 
-        if key == arcade.key.Z and self.inventory_other["002"]["number"] > 0:
+        if (
+            key == arcade.key.Z 
+            and 
+            self.inventory_other["002"]["number"] > NOTHING
+            ):
             self.swing_knife = False
 
         self.process_keychange()
 
-    def center_camera_to_player(self, speed=0.2):
-        screen_center_x = self.camera.scale * (self.player_sprite.center_x - (self.camera.viewport_width / 2))
-        screen_center_y = self.camera.scale * (self.player_sprite.center_y - (self.camera.viewport_height / 2))
-        if screen_center_x < 0:
-            screen_center_x = 0
-        if screen_center_y < 0:
-            screen_center_y = 0
+    def center_camera_to_player(self, speed=CAMERA_TRACK_SPEED):
+        screen_center_x = (
+            self.camera.scale 
+            * (
+            self.player_sprite.center_x 
+            - (self.camera.viewport_width*HALF_BLOCK)
+            )
+            )
+        screen_center_y = (
+            self.camera.scale 
+            * (
+            self.player_sprite.center_y 
+            - (self.camera.viewport_height*HALF_BLOCK)
+            )
+            )
+        if screen_center_x < ORIGIN[X_POS]:
+            screen_center_x = ORIGIN[X_POS]
+        if screen_center_y < ORIGIN[Y_POS]:
+            screen_center_y = ORIGIN[Y_POS]
         player_centered = (screen_center_x, screen_center_y)
 
         self.camera.move_to(player_centered, speed)
 
     def activate_quest(self, villager):
-        """Function which handles the quest activation."""
+        """
+        Method which handles the quest activation.
+        Takes the quest info from the reference
+        dictionary depending on the villager interacted with.
+        """
         quest = QUEST_REF[villager.id]
         self.start_dialogue = quest["dialogue"]
         self.quests[villager.id] = {
@@ -1932,26 +2125,40 @@ class GameView(arcade.View):
         self.latest_quest = self.quests[villager.id]
 
     def check_quest_complete(self, villager):
-        if self.inventory_quest[villager.id]["number"] < self.quests[villager.id]["num_needed"]:
+        if (
+            self.inventory_quest[villager.id]["number"] 
+            < 
+            self.quests[villager.id]["num_needed"]
+            ):
             self.check_quest = self.quests[villager.id]
-            self.not_complete_time = 2
+            self.not_complete_time = QUEST_INCOMPLETE_TIME
         else:
             self.end_quest(villager)
     
     def end_quest(self, villager):
         self.finished_quest = self.quests.pop(villager.id)
-        self.finished_quest["dialogue_time"] = 2
+        self.finished_quest["dialogue_time"] = QUEST_COMPLETE_TIME
         self.quest_ended = True
         self.completed_quests.append(villager.id)
-        self.inventory_quest[villager.id]["number"] -= self.finished_quest["num_needed"]
+        self.inventory_quest[villager.id]["number"] -= (
+            self.finished_quest["num_needed"]
+            )
         if QUEST_REF[villager.id]["reward_item"] != "Energy":
-            self.inventory_other[villager.id]["number"] += QUEST_REF[villager.id]["reward_num"]
+            self.inventory_other[villager.id]["number"] += (
+                QUEST_REF[villager.id]["reward_num"]
+                )
         else:
-            if self.energy < 3:
+            if self.energy < MAX_ENERGY:
                 self.energy += QUEST_REF[villager.id]["reward_num"]
 
     def on_update(self, delta_time):
-        """Movement and game logic"""
+        """
+        Movement and game logic.
+        Advances the game every frame in terms of physics,
+        which includes detecting collisions, adding sprites to layers,
+        removing sprites from layers,
+        or calculating level changes.
+        """
 
         # Reset the interactable text
         self.can_interact = False
@@ -1961,13 +2168,17 @@ class GameView(arcade.View):
         self.physics_engine.update()
 
         # If blaze shape then do helicopter physics
-        if self.shape == 2:
+        if self.shape == PLAYER_SHAPE_BLAZE:
             self.player_sprite.change_y = self.fly_speed
             if not self.is_flying:
-                self.fly_speed -= 4*GRAVITY*delta_time
-            if self.physics_engine.can_jump() and self.time_since_ground > 1:
-                self.fly_speed = 0
-                self.time_since_ground = 0
+                self.fly_speed -= GRAV_MULT*GRAVITY*delta_time
+            if (
+                self.physics_engine.can_jump() 
+                and 
+                self.time_since_ground > START_CLIMB
+                ):
+                self.fly_speed = STATIONARY
+                self.time_since_ground = NOTHING
             self.time_since_ground += delta_time
                 
 
@@ -1977,7 +2188,11 @@ class GameView(arcade.View):
         else:
             self.player_sprite.can_jump = True
 
-        if self.physics_engine.is_on_ladder() and not self.physics_engine.can_jump():
+        if (
+            self.physics_engine.is_on_ladder() 
+            and 
+            not self.physics_engine.can_jump()
+            ):
             self.player_sprite.is_on_ladder = True
             self.process_keychange()
         else:
@@ -1989,10 +2204,16 @@ class GameView(arcade.View):
             if self.swing_knife:
                 knife = Knife()
                 if self.player_sprite.facing_direction == RIGHT_FACING:
-                    knife.center_x = self.player_sprite.center_x + 0.5*TILE_SCALING*self.tile_map.tile_width
+                    knife.center_x = (
+                        self.player_sprite.center_x 
+                        + HALF_BLOCK*TILE_SCALING*self.tile_map.tile_width
+                        )
                     knife.facing_direction = RIGHT_FACING
                 else:
-                    knife.center_x = self.player_sprite.center_x - 0.5*TILE_SCALING*self.tile_map.tile_width
+                    knife.center_x = (
+                        self.player_sprite.center_x 
+                        - HALF_BLOCK*TILE_SCALING*self.tile_map.tile_width
+                        )
                     knife.facing_direction = LEFT_FACING
                 knife.center_y = self.player_sprite.center_y
                     
@@ -2003,17 +2224,23 @@ class GameView(arcade.View):
             self.knife_timer += delta_time
             if self.knife_timer >= KNIFE_COOLDOWN:
                 self.can_knife = True
-                self.knife_timer = 0    
+                self.knife_timer = NOTHING
 
         # Remove knife after it has finished its swing
         # If an error occurs that just means the knife doesn't exist and we can ignore.
         try:
             for knife in self.scene[LAYER_NAME_KNIFE]:
                 if self.player_sprite.facing_direction == RIGHT_FACING:
-                    knife.center_x = self.player_sprite.center_x + 0.5*TILE_SCALING*self.tile_map.tile_width
+                    knife.center_x = (
+                        self.player_sprite.center_x 
+                        + HALF_BLOCK*TILE_SCALING*self.tile_map.tile_width
+                    )
                     knife.facing_direction = RIGHT_FACING
                 else:
-                    knife.center_x = self.player_sprite.center_x - 0.5*TILE_SCALING*self.tile_map.tile_width
+                    knife.center_x = (
+                        self.player_sprite.center_x 
+                        - HALF_BLOCK*TILE_SCALING*self.tile_map.tile_width
+                        )
                     knife.facing_direction = LEFT_FACING
                 knife.center_y = self.player_sprite.center_y
                 knife.update_animation(delta_time)
@@ -2044,11 +2271,16 @@ class GameView(arcade.View):
                 [LAYER_NAME_MOVING_PLATFORMS]
             )
 
-
         # Update villagers
         try:
             for villager in self.scene[LAYER_NAME_VILLAGERS]:
-                villager.update(player_pos=(self.player_sprite.center_x, self.player_sprite.center_y), tile_map=self.tile_map)
+                villager.update(
+                    player_pos=(
+                    self.player_sprite.center_x, 
+                    self.player_sprite.center_y
+                    ), 
+                    tile_map=self.tile_map
+                    )
         except:
             pass
 
@@ -2057,23 +2289,33 @@ class GameView(arcade.View):
             for enemy in self.scene[LAYER_NAME_ENEMIES]:
                 if (
                     enemy.boundary_right
-                    and enemy.right > enemy.boundary_right*TILE_SCALING*self.tile_map.tile_width
-                    and enemy.change_x > 0
+                    and enemy.right > (
+                    enemy.boundary_right
+                    *TILE_SCALING*self.tile_map.tile_width
+                    )
+                    and enemy.change_x > STATIONARY
                 ):
+                    # No need for a constant here, this just
+                    # reverses the horizontal speed.
                     enemy.change_x *= -1
 
                 if (
                     enemy.boundary_left
-                    and enemy.left < enemy.boundary_left*TILE_SCALING*self.tile_map.tile_width
-                    and enemy.change_x < 0
+                    and enemy.left < (
+                    enemy.boundary_left
+                    *TILE_SCALING*self.tile_map.tile_width
+                    )
+                    and enemy.change_x < STATIONARY
                 ):
+                    # No need for a constant here, this just
+                    # reverses the horizontal speed.
                     enemy.change_x *= -1
         except:
             pass
         
 
         # Only try to check interaction with villagers if in human shape
-        if self.shape == 0:
+        if self.shape == PLAYER_SHAPE_HUMAN:
             try:
                 interactable_villager = None
                 # Check if in range of villager
@@ -2095,7 +2337,10 @@ class GameView(arcade.View):
                                     if villager.id not in self.quests.keys():
                                         villager.wave = True
                                         self.activate_quest(villager)
-                                    elif self.latest_quest["dialogue_time"] <= 0:
+                                    elif (
+                                        self.latest_quest["dialogue_time"] 
+                                        <= NOTHING
+                                        ):
                                         self.check_quest_complete(villager)
                                 else:
                                     villager.wave = True
@@ -2104,7 +2349,10 @@ class GameView(arcade.View):
 
         # Check if interaction possible with door
         for id, info in self.doors.items():
-            if calculate_distance(self.player_sprite.position, info["pos"]) < 1*TILE_SCALING*self.tile_map.tile_width:
+            if (
+                calculate_distance(self.player_sprite.position, info["pos"])
+                < TILE_SCALING*self.tile_map.tile_width
+                ):
                 self.interactable_door = id
                 self.can_interact = True
                 break
@@ -2112,7 +2360,11 @@ class GameView(arcade.View):
         
         # Level changing mechanics
         # Check if actually interacting with door
-        if self.interact and self.can_interact and self.interactable_door != None:
+        if (
+            self.interact 
+            and self.can_interact 
+            and self.interactable_door != None
+            ):
             if self.doors[self.interactable_door]["key_req"] == "None":
                 self.level = self.doors[self.interactable_door]["warp"]
                 self.spawnpoint = self.doors[self.interactable_door]["dest"]
@@ -2122,21 +2374,36 @@ class GameView(arcade.View):
             else:
                 has_key = False
                 for item in self.inventory_other.values():
-                    if item["name"] == self.doors[self.interactable_door]["key_req"] and item["number"] > 0:
+                    if (
+                        item["name"] == self.doors[
+                            self.interactable_door
+                            ]["key_req"] 
+                        and item["number"] > NOTHING
+                        ):
                         has_key = True
                         break
                 if has_key:
                     self.level = self.doors[self.interactable_door]["warp"]
-                    self.spawnpoint = self.doors[self.interactable_door]["dest"]
+                    self.spawnpoint = self.doors[
+                        self.interactable_door
+                        ]["dest"]
                     self.interact = False
                     self.setup()
                     return
                 else:
-                    self.missing_key_text = 2
+                    self.missing_key_text = MISSING_KEY_TIME
                             
         # Check if interaction possible with statue
         try:
-            if len(arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_STATUES])) > 0:
+            if (
+                len(
+                arcade.check_for_collision_with_list(
+                self.player_sprite, 
+                self.scene[LAYER_NAME_STATUES]
+                )
+                ) 
+                > NOTHING
+                ):
                 self.can_interact = True
         except:
             pass
@@ -2145,63 +2412,102 @@ class GameView(arcade.View):
         # Check for collisions with the statue
         try:
             if self.interact:
-                player_collision_list = arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_STATUES])
+                player_collision_list = arcade.check_for_collision_with_list(
+                    self.player_sprite, self.scene[LAYER_NAME_STATUES]
+                    )
                 for collision in player_collision_list:
                     if self.prev_spawnpoint != None:
-                        self.scene[LAYER_NAME_STATUES].append(self.prev_spawnpoint)
+                        self.scene[LAYER_NAME_STATUES].append(
+                            self.prev_spawnpoint
+                            )
                         self.scene[LAYER_NAME_SPAWNPOINT].clear()
-                    if abs(collision.center_x - self.player_sprite.center_x) < self.tile_map.tile_width * TILE_SCALING * 2:
-                        self.spawnpoint = (collision.center_x / (self.tile_map.tile_width * TILE_SCALING), collision.center_y / (self.tile_map.tile_width * TILE_SCALING) - 1)
+                    if (
+                        abs(collision.center_x - self.player_sprite.center_x)
+                        < 
+                        (
+                        self.tile_map.tile_width * TILE_SCALING 
+                        * MIN_STATUE_DIST
+                        )
+                        ):
+                        self.spawnpoint = (
+                            (
+                            collision.center_x / 
+                            (self.tile_map.tile_width * TILE_SCALING)
+                            ), 
+                            (
+                            collision.center_y / 
+                            (
+                            self.tile_map.tile_width * TILE_SCALING
+                            ) 
+                            - ONE_BLOCK)
+                            )
                         self.scene[LAYER_NAME_SPAWNPOINT].append(collision)
                         self.scene[LAYER_NAME_STATUES].remove(collision)
                         self.prev_spawnpoint = collision
-                        self.energy = 3
+                        self.energy = MAX_ENERGY
                 self.interact = False
         except:
             pass
 
-        # Check for collisions with energy orbs
+        # Check for collisions with energy orbs.
+        # Only register if the player still has room to gain energy.
         try:
-            if self.energy < 3:
-                player_collision_list = arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_ORBS])
+            if self.energy < MAX_ENERGY:
+                player_collision_list = arcade.check_for_collision_with_list(
+                    self.player_sprite, self.scene[LAYER_NAME_ORBS]
+                    )
                 for collision in player_collision_list:
                     if collision.type == "Energy":
-                        self.energy += 1
+                        self.energy += UNIT_INCREMENT
                         self.scene[LAYER_NAME_ORBS].remove(collision)
         except:
             pass
         
         # Check for collisions with keys or secrets
         try:
-            player_collision_list = arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_COLLECTIBLES])
+            player_collision_list = arcade.check_for_collision_with_list(
+                self.player_sprite, self.scene[LAYER_NAME_COLLECTIBLES]
+                )
             for collision in player_collision_list:
                 if collision.type == "Key":
                     self.keys_obtained.append(collision.id)
                     self.scene[LAYER_NAME_COLLECTIBLES].remove(collision)
                 if collision.type == "Secret":
-                    self.secret_found_text = 2
-                    print("This works")
+                    self.secret_found_text = SECRET_FOUND_TIME
                     self.secrets_found.append(collision.name)
-                    print("This doesn't")
-                    self.scene[LAYER_NAME_COLLECTIBLES].remove(collision)   
+                    self.scene[LAYER_NAME_COLLECTIBLES].remove(collision)
 
         except:
             pass
 
         # Check for collisions with locked door
         try:
-            player_collision_list = arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_LOCKED_DOORS])
+            player_collision_list = arcade.check_for_collision_with_list(
+                self.player_sprite, self.scene[LAYER_NAME_LOCKED_DOORS]
+                )
             for collision in player_collision_list:
                 if str(collision.id) in self.keys_obtained:
-                    for door_barrier in self.scene[LAYER_NAME_DOOR_BARRIERS_CLOSED]:
-                        self.scene[LAYER_NAME_DOOR_BARRIERS_OPEN].append(door_barrier)
-                        self.scene[LAYER_NAME_DOOR_BARRIERS_CLOSED].remove(door_barrier)
+                    for door_barrier in self.scene[
+                        LAYER_NAME_DOOR_BARRIERS_CLOSED
+                        ]:
+                        self.scene[LAYER_NAME_DOOR_BARRIERS_OPEN].append(
+                            door_barrier
+                            )
+                        self.scene[LAYER_NAME_DOOR_BARRIERS_CLOSED].remove(
+                            door_barrier
+                            )
                     collision.open = True
                 else:
-                    self.missing_key_text = 2
-                    for door_barrier in self.scene[LAYER_NAME_DOOR_BARRIERS_OPEN]:
-                        self.scene[LAYER_NAME_DOOR_BARRIERS_CLOSED].append(door_barrier)
-                        self.scene[LAYER_NAME_DOOR_BARRIERS_OPEN].remove(door_barrier)
+                    self.missing_key_text = MISSING_KEY_TIME
+                    for door_barrier in self.scene[
+                        LAYER_NAME_DOOR_BARRIERS_OPEN
+                        ]:
+                        self.scene[LAYER_NAME_DOOR_BARRIERS_CLOSED].append(
+                            door_barrier
+                            )
+                        self.scene[LAYER_NAME_DOOR_BARRIERS_OPEN].remove(
+                            door_barrier
+                            )
 
         except:
             pass
@@ -2234,33 +2540,55 @@ class GameView(arcade.View):
             # If there is an error that means the level doesn't
             # actually have any collectibles.
             try:
-                player_collision_list = arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_COLLECTIBLES])
+                player_collision_list = arcade.check_for_collision_with_list(
+                    self.player_sprite, self.scene[LAYER_NAME_COLLECTIBLES]
+                    )
                 for collision in player_collision_list:
                     if quest_req_apples:
                         # Check for collisions with apples
                         if collision.type == "Apple":
-                            self.inventory_quest[quest_id_apples]["number"] += 1
-                            self.scene[LAYER_NAME_COLLECTIBLES].remove(collision)
+                            self.inventory_quest[
+                                quest_id_apples
+                                ]["number"] += UNIT_INCREMENT
+                            self.scene[LAYER_NAME_COLLECTIBLES].remove(
+                                collision
+                                )
                     if quest_req_cards:
                         # Check for collisions with cards
                         if collision.type == "Card":
-                            self.inventory_quest[quest_id_cards]["number"] += 1
-                            self.scene[LAYER_NAME_COLLECTIBLES].remove(collision)
+                            self.inventory_quest[
+                                quest_id_cards
+                                ]["number"] += UNIT_INCREMENT
+                            self.scene[LAYER_NAME_COLLECTIBLES].remove(
+                                collision
+                                )
                     if quest_req_documents:
                         # Check for collisions with documents
                         if collision.type == "Document":
-                            self.inventory_quest[quest_id_documents]["number"] += 1
-                            self.scene[LAYER_NAME_COLLECTIBLES].remove(collision)
+                            self.inventory_quest[
+                                quest_id_documents
+                                ]["number"] += UNIT_INCREMENT
+                            self.scene[LAYER_NAME_COLLECTIBLES].remove(
+                                collision
+                                )
                     if quest_req_helmets:
                         # Check for collisions with helmets
                         if collision.type == "Helmet":
-                            self.inventory_quest[quest_id_helmets]["number"] += 1
-                            self.scene[LAYER_NAME_COLLECTIBLES].remove(collision)
+                            self.inventory_quest[
+                                quest_id_helmets
+                                ]["number"] += UNIT_INCREMENT
+                            self.scene[LAYER_NAME_COLLECTIBLES].remove(
+                                collision
+                                )
                     if quest_req_rainbow_rocks:
                         # Check for collisions with rainbow rocks
                         if collision.type == "Rainbow Rock":
-                            self.inventory_quest[quest_id_rainbow_rocks]["number"] += 1
-                            self.scene[LAYER_NAME_COLLECTIBLES].remove(collision)
+                            self.inventory_quest[
+                                quest_id_rainbow_rocks
+                                ]["number"] += UNIT_INCREMENT
+                            self.scene[LAYER_NAME_COLLECTIBLES].remove(
+                                collision
+                                )
             except:
                 pass
 
@@ -2268,30 +2596,42 @@ class GameView(arcade.View):
         # Update energy bar
         try:
             for energy_bar in self.gui_scene[LAYER_NAME_ENERGY]:
-                energy_bar.texture = arcade.load_texture(f"{MAIN_PATH}/assets/GUI/Energy/{self.energy}.png")
+                energy_bar.texture = arcade.load_texture(
+                    f"{MAIN_PATH}/assets/GUI/Energy/{self.energy}.png"
+                    )
         except:
             pass
 
         # Check for stabbing of enemy
         try:
-            knife_collision_list = arcade.check_for_collision_with_list(self.scene[LAYER_NAME_KNIFE][0], self.scene[LAYER_NAME_ENEMIES])
+            knife_collision_list = arcade.check_for_collision_with_list(
+                self.scene[LAYER_NAME_KNIFE][FIRST_VALUE], 
+                self.scene[LAYER_NAME_ENEMIES]
+                )
             for collision in knife_collision_list:
                 if collision.can_kill:
                     for id, info in self.inventory_quest.items():
                         if collision.drop == info["name"]:
-                            self.inventory_quest[id]["number"] += 1
+                            self.inventory_quest[id]["number"] += (
+                                UNIT_INCREMENT
+                                )
                     self.scene[LAYER_NAME_ENEMIES].remove(collision)
         
         except:
             pass
 
         # Check for collisions with enemies
+        # If touching enemy start timer for one second immunity.
+        # Also make the player jump up to extricate themself from
+        # the situation.
         try:
-            player_collision_list = arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_ENEMIES])
-            if len(player_collision_list) > 0:
-                if self.cooldown <= 0:
-                    self.health -= 1
-                    self.cooldown = 1
+            player_collision_list = arcade.check_for_collision_with_list(
+                self.player_sprite, self.scene[LAYER_NAME_ENEMIES]
+                )
+            if len(player_collision_list) > NOTHING:
+                if self.cooldown <= NOTHING:
+                    self.health -= UNIT_INCREMENT
+                    self.cooldown = HIT_COOLDOWN
                     self.player_sprite.change_y = PLAYER_JUMP_SPEED
         except:
             pass
@@ -2299,88 +2639,142 @@ class GameView(arcade.View):
         # Update health bar
         try:
             for health_bar in self.gui_scene[LAYER_NAME_HEALTH]:
-                health_bar.texture = arcade.load_texture(f"{MAIN_PATH}/assets/GUI/Health/{self.health}.png")
+                health_bar.texture = arcade.load_texture(
+                    f"{MAIN_PATH}/assets/GUI/Health/{self.health}.png"
+                    )
         except:
             pass
 
         # Reveal tunnels/cave when player approaches
         try:
             for tile in self.scene[LAYER_NAME_CAVE]:
-                distance_to_player = calculate_distance([self.player_sprite.center_x, self.player_sprite.center_y], [tile.center_x, tile.center_y])
-                if distance_to_player < 10*TILE_SCALING*self.tile_map.tile_width:
-                    tile.alpha = 255*(max(distance_to_player-5*TILE_SCALING*self.tile_map.tile_width, 0)) / (10*TILE_SCALING*self.tile_map.tile_width)
+                distance_to_player = calculate_distance(
+                    [
+                        self.player_sprite.center_x, 
+                        self.player_sprite.center_y
+                        ], 
+                    [tile.center_x, tile.center_y]
+                    )
+                if (
+                    distance_to_player 
+                    < 
+                    CAVE_REVEAL_DIST*TILE_SCALING*self.tile_map.tile_width
+                    ):
+                    tile.alpha = (
+                        MAX_OPACITY
+                        *(
+                        max(
+                        (
+                        distance_to_player-CAVE_TRNSPT_DIST
+                        *TILE_SCALING*self.tile_map.tile_width
+                        ), 
+                        NOTHING
+                        )
+                        ) 
+                        / (
+                        CAVE_REVEAL_DIST*TILE_SCALING*self.tile_map.tile_width
+                        )
+                        )
         except:
             pass
         
 
         # Once death animation over respawn
-        if self.player_sprite.dying and self.player_sprite.dying != self.player_sprite.is_dead:
-            self.player_sprite.center_x = self.tile_map.tile_width * TILE_SCALING * self.spawnpoint[0]
-            self.player_sprite.center_y = self.tile_map.tile_height * TILE_SCALING * self.spawnpoint[1]
+        if (
+            self.player_sprite.dying 
+            and 
+            self.player_sprite.dying != self.player_sprite.is_dead
+            ):
+            self.player_sprite.center_x = (
+                self.tile_map.tile_width 
+                * TILE_SCALING * self.spawnpoint[X_POS]
+                )
+            self.player_sprite.center_y = (
+                self.tile_map.tile_height 
+                * TILE_SCALING * self.spawnpoint[Y_POS]
+                )
             
             self.player_sprite.dying = False
 
         # Check for collision with death layer (spikes etc)
         try:
-            if len(arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_DEATH])) > 0 and not self.player_sprite.is_dead:
+            if (
+                len(
+                arcade.check_for_collision_with_list(
+                    self.player_sprite, 
+                    self.scene[LAYER_NAME_DEATH]
+                    )
+                ) 
+                > NOTHING and not self.player_sprite.is_dead
+                ):
                 self.player_sprite.is_dead = True
         except:
             pass
         
         # Run player death animation
-        if self.player_sprite.center_y < 0 or self.health <= 0 and not self.player_sprite.is_dead:
+        if (
+            self.player_sprite.center_y < ORIGIN[Y_POS]
+            or 
+            self.health <= NOTHING 
+            and 
+            not self.player_sprite.is_dead
+            ):
             
             self.player_sprite.is_dead = True
         
         if self.player_sprite.is_dead:
-            self.health = 3
-            self.energy = 3
-            self.fly_speed = 0
+            self.health = MAX_HEALTH
+            self.energy = MAX_ENERGY
+            self.fly_speed = STATIONARY
 
             
-        if len(self.quests) > 0:
+        if len(self.quests) > NOTHING:
             self.in_quest = True
         else:
             self.in_quest = False
 
         # Reducing all of the timer variables
-        if self.cooldown > 0:
+        if self.cooldown > NOTHING:
             self.cooldown -= delta_time
         else:
-            self.cooldown = 0
+            self.cooldown = NOTHING
         
-        if self.not_complete_time > 0:
+        if self.not_complete_time > NOTHING:
             self.not_complete_time -= delta_time
         else:
-            self.not_complete_time = 0
+            self.not_complete_time = NOTHING
 
-        if self.missing_key_text > 0:
+        if self.missing_key_text > NOTHING:
             self.missing_key_text -= delta_time
         else:
-            self.missing_key_text = 0
+            self.missing_key_text = NOTHING
         
-        if self.secret_found_text > 0:
+        if self.secret_found_text > NOTHING:
             self.secret_found_text -= delta_time
         else:
-            self.secret_found_text = 0
+            self.secret_found_text = NOTHING
 
         # If these variables exist, i.e. after a quest has been started,
         # Run the timer code
         # Otherwise, just ignore it
         try:
-            if self.latest_quest["dialogue_time"] > 0:
+            if self.latest_quest["dialogue_time"] > NOTHING:
                 self.latest_quest["dialogue_time"] -= delta_time
             else:
-                self.latest_quest["dialogue_time"] = 0
+                self.latest_quest["dialogue_time"] = NOTHING
             
-            if self.finished_quest["dialogue_time"] > 0:
+            if self.finished_quest["dialogue_time"] > NOTHING:
                 self.finished_quest["dialogue_time"] -= delta_time
             else:
-                self.finished_quest["dialogue_time"] = 0
+                self.finished_quest["dialogue_time"] = NOTHING
 
             # Once the timer for the quest end dialogue goes to 0, 
             # delete the finished quest.
-            if self.finished_quest["dialogue_time"] <= 0 and self.quest_ended:
+            if (
+                self.finished_quest["dialogue_time"] 
+                <= 
+                NOTHING and self.quest_ended
+                ):
                 self.finished_quest = None
                 self.quest_ended = False
   
@@ -2389,7 +2783,9 @@ class GameView(arcade.View):
 
         # Check for collision with goal/warp portal
         try:
-            player_collision_list = arcade.check_for_collision_with_list(self.player_sprite, self.scene[LAYER_NAME_GOAL])
+            player_collision_list = arcade.check_for_collision_with_list(
+                self.player_sprite, self.scene[LAYER_NAME_GOAL]
+                )
             for collision in player_collision_list:
                 if collision.warp == "4":
                     end_view = EndScreen()
