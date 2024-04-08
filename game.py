@@ -245,6 +245,8 @@ Y_POS = 1
 ORIGIN = [0, 0]
 
 # Timing constants
+# These constants determine the amount of time something occurs.
+# These may be cooldowns or text popups.
 KNIFE_COOLDOWN = 0.5
 HIT_COOLDOWN = 1
 QUEST_INCOMPLETE_TIME = 2
@@ -253,6 +255,10 @@ MISSING_KEY_TIME = 2
 SECRET_FOUND_TIME = 2
 
 # Sensing constants
+# These constants are the maximum distance at which interactions can
+# occur, or things are revealed.
+# CAVE_TRNSPT_DIST means the distance at which cave blocks become fully
+# transparent.
 MIN_STATUE_DIST = 2
 CAVE_REVEAL_DIST = 10
 CAVE_TRNSPT_DIST = 5
@@ -261,9 +267,18 @@ CAVE_TRNSPT_DIST = 5
 MUSIC_VOLUME = 0.3
 
 # Dictionary References
+# QUEST_REF is the dictionary which stores all of the quest information
+# corresponding to each villager id.
+# Each nested dictionary contains the quest dialogue, the amount of
+# time it displays for, the item and quantity required, and the
+# item and quantity of the reward.
+# The string concatenation is used to keep line length within standard.
 QUEST_REF = {
     "000": {
-        "dialogue": "I'm getting too old to climb trees, can you please pick 3 apples for me?",
+        "dialogue": (
+            "I'm getting too old to climb trees,"
+            +" can you please pick 3 apples for me?"
+            ),
         "dialogue_time": 3,
         "item": "Apple",
         "number": 3,
@@ -271,7 +286,10 @@ QUEST_REF = {
         "reward_num": 1 
     },
     "001": {
-        "dialogue": "Heya, I dropped my card on the other side of that wraith over there, could you grab it for me?",
+        "dialogue": (
+            "Heya, I dropped my card on the other side" 
+            +" of that wraith over there, could you grab it for me?"
+            ),
         "dialogue_time": 4,
         "item": "Card",
         "number": 1,
@@ -279,7 +297,11 @@ QUEST_REF = {
         "reward_num": 1 
     },
     "002": {
-        "dialogue": "I've been looking for a legal document in my basement, can you find it for me? I'll give you this knife if you find it.",
+        "dialogue": (
+            "I've been looking for a legal document in my basement,"
+            +" can you find it for me?"
+            +" I'll give you this knife if you find it."
+            ),
         "dialogue_time": 5,
         "item": "Document",
         "number": 1,
@@ -287,7 +309,11 @@ QUEST_REF = {
         "reward_num": 1
     },
     "003": {
-        "dialogue": "Please kill the wraith over there, we need to be able to access the church. I can grant you access if you kill it.",
+        "dialogue": (
+            "Please kill the wraith over there,"
+            +" we need to be able to access the church."
+            +" I can grant you access if you kill it."
+            ),
         "dialogue_time": 5,
         "item": "Ectoplasm",
         "number": 1,
@@ -295,7 +321,10 @@ QUEST_REF = {
         "reward_num": 1
     },
     "100": {
-        "dialogue": "Help, I've lost my helmet. Get it for me so I can keep mining and I'll give you a key.",
+        "dialogue": (
+            "Help, I've lost my helmet."+
+            " Get it for me so I can keep mining and I'll give you a key."
+            ),
         "dialogue_time": 5,
         "item": "Helmet",
         "number": 1,
@@ -315,8 +344,11 @@ QUEST_REF = {
 # Loading mirrored sprites
 def load_texture_pair(filename):
     """
-    Load a texture pair, with the second being a mirror image.
+    Load a texture pair from a file path, 
+    with the second being a mirror image.
     """
+    # Returns a list of the image file as an arcade texture and its
+    # mirror image texture.
     return [
         arcade.load_texture(filename),
         arcade.load_texture(filename, flipped_horizontally=True),
@@ -324,8 +356,13 @@ def load_texture_pair(filename):
 
 def calculate_distance(pos_1, pos_2):
     """Returns distance between two positions"""
-    distance_x = pos_1[0] - pos_2[0]
-    distance_y = pos_1[1] - pos_2[1]
+
+    # Uses Pythagora's Theorem to calculate straight line distance
+    # between two postions. Literals have not been changed because
+    # they literally just mean squaring the value in this case, no
+    # other meaning contained.
+    distance_x = pos_1[X_POS] - pos_2[X_POS]
+    distance_y = pos_1[Y_POS] - pos_2[Y_POS]
     return math.sqrt(distance_x**2 + distance_y**2)
 
 
@@ -344,12 +381,28 @@ class Entity(arcade.Sprite):
         # Default right facing
         self.facing_direction = RIGHT_FACING
 
-        # Image sequences
+        # Set the current texture index to 0, which is the first
+        # texture. Scale the textures by CHARACTER_SCALING by default.
+        # (This can be overidden in child classes).
         self.cur_texture = FIRST_TEXTURE
         self.scale = CHARACTER_SCALING
 
+        # Define the main path accessed in this class.
         main_path = f"{MAIN_PATH}/assets/{category_folder}/{sprite_folder}"
 
+        # The below section loads the image files into lists
+        # based on the animation they are a part of.
+        # Since all of the code is essentially the same here,
+        # I'll just put the explanation up here for the whole thing.
+        # The program first uses the os library to find the number of
+        # files in the image folder for the animation.
+        # Because the only files in the folders are the images,
+        # we can just count the number of files in the folder which
+        # corresponds to the number of frames in the animation.
+        # Then for each image in the animation folder we load the
+        # texture pair generated into the animation texture list,
+        # while also saving the number of frames in the animation
+        # for later.
         if "Idle" in available_anims:
             # Idle frames
             frame_num = FIRST_TEXTURE
@@ -456,6 +509,7 @@ class Entity(arcade.Sprite):
         self.texture = self.idle_textures[FIRST_TEXTURE][RIGHT_FACING]
 
         # Set hitbox
+        # Arcade creates a hitbox based on the vertices of the texture.
         self.set_hit_box(self.texture.hit_box_points)
 
 # Collectible Objects Template class
@@ -472,6 +526,9 @@ class Collectible(Entity):
         """
         # Inherit from parent class (Entity)
         super().__init__("InanimateObjects", sprite_folder, ["Idle"])
+
+        # Override the CHARACTER_SCALING from the parent class with
+        # COLLECTIBLE_SCALING
         self.scale = COLLECTIBLE_SCALING
 
 
@@ -486,9 +543,22 @@ class Orb(Collectible):
         """
         # Inherit from parent class (Collectible)
         super().__init__("EnergyOrb")
+
+        # The type attribute is used to figure out what kind of
+        # collectible the player has collided with.
         self.type = None
 
     def update_animation(self, delta_time: float = FRAMERATE):
+        """
+        Updates the texture of the orb every frame.
+        """
+        # For every frame, increase the current texture index by one.
+        # However, the texture only changes every n frame indexes,
+        # where n is the animation rate multiplier defined in the
+        # ANIM_MULT dictionary.
+        # Once the current texture index reaches its maximum,
+        # where the last texture in the loop has displayed for the
+        # correct number of frames, it is reset to 0.
         self.cur_texture += UNIT_INCREMENT
         if (
             self.cur_texture 
@@ -501,6 +571,8 @@ class Orb(Collectible):
             ][RIGHT_FACING]
         return
 
+# All of the collectible classes below have the same format so I will
+# only comment and explain one of them.
 # Apple class
 class Apple(Collectible):
     """Apple collectible sprite"""
@@ -512,7 +584,12 @@ class Apple(Collectible):
         """
         # Inherit from parent class (Collectible)    
         super().__init__("Apple")
+
+        # The type attribute is used to figure out what kind of
+        # collectible the player has collided with.
         self.type = None
+
+        # Sets initial texture to the idle texture.
         self.texture = self.idle_textures[FIRST_TEXTURE][RIGHT_FACING]
 
 # Lost card class
@@ -588,6 +665,8 @@ class Key(Collectible):
 
 # Secrets sprite classes
 # Constructor for secret statuette texture
+# Once again the classes below all have the same format so I'll only
+# comment and explain one of them.
 class Statuette(Collectible):
     """Sprite for statuette (secret)"""
     def __init__(self):
@@ -600,6 +679,9 @@ class Statuette(Collectible):
         # Inherit from parent class (Collectible)
         super().__init__("Statuette")
         self.type = None
+
+        # Name is used to figure out which secrets the player
+        # discovered once the game ends.
         self.name = None
         self.texture = self.idle_textures[FIRST_TEXTURE][RIGHT_FACING]
 
@@ -651,6 +733,7 @@ class Totem(Collectible):
         self.name = None
         self.texture = self.idle_textures[FIRST_TEXTURE][RIGHT_FACING]
 
+# Other sprites
 # Class for the level end portal sprite
 class GoalPortal(Entity):
     """Sprite for next level portal"""
@@ -693,6 +776,10 @@ class LockedDoor(Entity):
         Texture can switch from closed to open depending on the parity
         of the open attribute.
         """
+
+        # If the state of the object is 'not open', then display the
+        # closed door texture. Otherwise, display the open door
+        # texture.
         if self.open == False:
             self.texture = self.closed_textures[FIRST_TEXTURE][RIGHT_FACING]
         else:
@@ -726,6 +813,10 @@ class Knife(Entity):
         """
 
          # Change direction if needed
+         # Once the last texture of the animation has been displayed
+         # for the correct number of frames despawn the knife.
+         # The boolean swing_finished is used to tell the program to
+         # despawn the knife.
         if not self.swing_finished:
             self.texture = self.idle_textures[
                 self.cur_texture // ANIM_MULT["Knife"]["Idle"]
@@ -772,6 +863,10 @@ class PlayerCharacter(Entity):
             )
 
         # Track state
+        # The various states are quite self-explanatory,
+        # though the difference between is_dead and dying is that
+        # during the death animation both is_dead and dying are True,
+        # but after the animation finishes dying becomes False.
         self.shape = shape
         self.jumping = False
         self.climbing = False
@@ -780,8 +875,13 @@ class PlayerCharacter(Entity):
         self.dying = False
 
     def update_animation(self, delta_time: float = FRAMERATE):
-
+        """
+        Changes the player sprite's texture every frame
+        depending on its current state.
+        """
         # Change direction if needed
+        # If the player is moving left but facing right make it face
+        # left and vice versa.
         if (
             self.change_x < STATIONARY 
             and 
@@ -797,8 +897,32 @@ class PlayerCharacter(Entity):
 
         # Hierarchy of animations:
         # Death, Climbing, Jumping, Idle, Walking
+        # Each frame the player can only be doing one of these actions.
+        # Once the animation with the highest rank in the hierarchy
+        # plays for that frame, the method ends and no other animations
+        # will run.
+        # The reason for this specific hierarchy is because if the
+        # player is dead they should not be able to do any other
+        # actions.
+        # Otherwise, if there's movement in the y-direction regardless
+        # of x-movement the player must be jumping, unless they're on a
+        # ladder in which they are climbing instead.
+        # Finally, if the player has no y-movement or x-movement they
+        # must be idle, which leaves the walking animation where there
+        # is x-movement as the lowest rank in the hierarchy.
+        # The animations themselves work on the same basis as all of
+        # the previous ones so I won't go into detail about how it
+        # works.
+        # Different player shapes also have different animations and
+        # rates of animation so there are if statements checking player
+        # shape and playing corresponding animations.
 
         # Death animation
+        # If the player is dead start the death animation.
+        # However, the animation should only play once then the player
+        # should respawn, so after one cycle the 'dying' and 'is_dead'
+        # attributes will no longer match and the animation ends,
+        # triggering the player respawn.
         if self.is_dead:
             if not self.dying:
                 self.cur_texture = FIRST_TEXTURE
@@ -806,7 +930,10 @@ class PlayerCharacter(Entity):
             if (
                 self.cur_texture 
                 > 
-                self.death_frames*ANIM_MULT["Player1"]["Death"]-INDEX_OFFSET
+                (
+                    self.death_frames*ANIM_MULT["Player1"]["Death"]
+                    -INDEX_OFFSET
+                )
                 ):
                 self.cur_texture = FIRST_TEXTURE
                 self.is_dead = False
@@ -818,6 +945,8 @@ class PlayerCharacter(Entity):
             return
 
         # Climbing animation
+        # If the player is on a ladder and their y-speed
+        # is greater than START_CLIMB play the climbing animation.
         if self.shape == PLAYER_SHAPE_HUMAN:
             if self.is_on_ladder:
                 self.climbing = True
@@ -947,12 +1076,14 @@ class DefaultVillager(Entity):
         villager.
         """
         # Idle animation
+        # If the villager is not waving play the idle animation.
         if self.wave == False:
             self.texture = self.idle_textures[
                 FIRST_TEXTURE
                 ][self.facing_direction]
 
         # Wave animation
+        # If the villager is waving play the wave animation.
         elif self.wave == True:
             self.texture = self.wave_textures[
                 FIRST_TEXTURE
@@ -995,8 +1126,8 @@ class Enemy(Entity):
         """
         Initialises the textures for the enemy for the available
         animations/actions.
-        Also initalises the drop attribute is the item the enemy drops
-        upon death.
+        Also initalises the drop attribute which is the item the
+        enemy drops upon death.
         """
         # Inherit from parent class (Entity)
         # Available textures are idle and walking.
@@ -1009,6 +1140,10 @@ class Enemy(Entity):
         This creates the walking animation.
         """
         # Changing facing directions
+        # This works the same as the player so no explanation.
+        # However, because I accidentally created all the enemy sprites
+        # facing left by default, the LEFT_FACING and RIGHT_FACING
+        # constants are swapped for this class.
         if (
             self.change_x < STATIONARY 
             and 
@@ -1023,6 +1158,7 @@ class Enemy(Entity):
             self.facing_direction = LEFT_FACING
         
         # Walking animation
+        # Same as before so no explanation.
         self.cur_texture += UNIT_INCREMENT
         if (
             self.cur_texture 
@@ -1095,8 +1231,20 @@ class EndScreen(arcade.View):
     The screen displayed when the game is finished.
     """
     def __init__(self, secrets_found):
+        """
+        Initialises the background image of the end screen.
+        This is chosen by working out which secrets the player found
+        and displaying the corresponding image from the folder.
+        Takes in the parameter secrets_found, which is the list of
+        secrets the player managed to find.
+        """
         super().__init__()
         self.background = arcade.load_texture()
+
+        # Using by checking which secrets are present in the found list
+        # a unique string of numbers can be created for each
+        # combination of secrets. This is subsequently the file name
+        # for each background image.
         self.secrets_to_display = ""
         self.secrets_found = secrets_found
         if "Statuette" in self.secrets_found:
@@ -1115,6 +1263,7 @@ class EndScreen(arcade.View):
             self.secrets_to_display += "1"
         else:
             self.secrets_to_display += "0"
+
     def on_show_view(self):
         """Called when showing this view."""
         arcade.draw_lrwh_rectangle_textured(
@@ -1154,10 +1303,12 @@ class GameView(arcade.View):
         # Set up window with parent class (arcade.View)
         super().__init__()
 
+        # Make the mouse pointer invisible.
         self.window.set_mouse_visible = False
 
 
-        # Variables to check which key is being pressed
+        # Variables to check which key is being pressed,
+        # as well as different states related to key presses.
         self.left_pressed = False
         self.right_pressed = False
         self.up_pressed = False
@@ -1167,6 +1318,11 @@ class GameView(arcade.View):
         self.swing_knife = False
 
         # Player stats (health, energy, etc)
+        # Also contains the quest required items inventory and
+        # the quest reward and other items inventory.
+        # The inventories use the ID of the quest they belong to
+        # as a key.
+        # The rest are fairly self explanatory.
         self.health = MAX_HEALTH
         self.energy = NOTHING
         self.shape = PLAYER_SHAPE_HUMAN
@@ -1192,6 +1348,11 @@ class GameView(arcade.View):
         self.secrets_found = []
 
         # Quest variables
+        # These variables are all related to the quest system,
+        # and are fairly self explanatory.
+        # not_complete_time is a timer which dictates how long to
+        # display the pop up text when attempting to hand in an
+        # unfinished quest.
         self.quests = {}
         self.in_quest = False
         self.not_complete_time = NOTHING
@@ -1202,6 +1363,9 @@ class GameView(arcade.View):
         self.quest_ended = False
 
         # Sensing variables
+        # Fairly self explanatory, interactable_door is the
+        # warp door (door that goes to a sublevel) which the player is
+        # able to interact with. (Standing close enough)
         self.can_interact = False
         self.is_flying = False
         self.interactable_door = None
@@ -1227,6 +1391,8 @@ class GameView(arcade.View):
             )
 
         # Warp variables
+        # This dictionary records the positions of where the 
+        # warp doors are.
         self.doors = {}
 
         # Variables to change player spawnpoint
@@ -1249,6 +1415,7 @@ class GameView(arcade.View):
         self.gui_camera = None
 
         # Level setup
+        # Starts with the first main level.
         self.level = "1.1"
 
         # Primary camera for scrolling the screen
@@ -1289,6 +1456,7 @@ class GameView(arcade.View):
         self.player_sprite = None
 
         # Layer specific options for Tilemap
+        # These determine whether a tile layer acts as a wall or not.
         layer_options = {
             LAYER_NAME_PLATFORMS: {
                 "use_spatial_hash": True,
@@ -1351,6 +1519,10 @@ class GameView(arcade.View):
             arcade.set_background_color(BLACK)
 
         # Create the physics engine
+        # The try except is used to check if the "Door Barriers Closed"
+        # layer is present in the tilemap.
+        # If an error occurs that means the layer is not present and
+        # the except block runs, which contains all of the base layers.
         try:
             self.physics_engine = arcade.PhysicsEnginePlatformer(
                 self.player_sprite,
@@ -1376,6 +1548,8 @@ class GameView(arcade.View):
 
         # Add in NPCs
         # Add in villagers
+        # If an error occurs there are no villagers in the layer
+        # and the control variable is updated to reflect that.
         try:
             villagers_layer = self.tile_map.object_lists[LAYER_NAME_VILLAGERS]
             for villager_object in villagers_layer:
@@ -1403,6 +1577,9 @@ class GameView(arcade.View):
                     (self.tile_map.tile_height * TILE_SCALING)
                     -TILE_SCALING
                 )
+
+                # Update the control variable which tells the program
+                # that the tilemap contains the villager layer.
                 self.map_has_villagers = True
                 self.scene.add_sprite(LAYER_NAME_VILLAGERS, villager)
         except:
@@ -1417,6 +1594,9 @@ class GameView(arcade.View):
                 cartesian = self.tile_map.get_cartesian(
                     enemy_object.shape[X_POS], enemy_object.shape[Y_POS]
                 )
+
+                # The enemy type is determined by the custom property
+                # "type" from the tilemap.
                 enemy_type = enemy_object.properties["type"]
                 if enemy_type == "Wraith":
                     enemy = Wraith()
@@ -1431,6 +1611,9 @@ class GameView(arcade.View):
                     (cartesian[Y_POS]+HALF_BLOCK) 
                     * (self.tile_map.tile_height * TILE_SCALING)
                 )
+
+                # These setup the left and right limits of the enemy
+                # movement.
                 if "boundary_left" in enemy_object.properties:
                     enemy.boundary_left = enemy_object.properties[
                         "boundary_left"]
@@ -1439,18 +1622,31 @@ class GameView(arcade.View):
                     enemy.boundary_right = enemy_object.properties[
                         "boundary_right"
                         ]
+                
+                # Sets up the dropped item when the enemy is killed.
                 if "drop" in enemy_object.properties:
                     enemy.drop = enemy_object.properties["drop"]
+                
+                # Sets up whether the enemy is actually killable.
                 if "can_kill" in enemy_object.properties:
                     enemy.can_kill = enemy_object.properties["can_kill"]
+
+                # Updates control variable to reflect presence of enemy
+                # layer.
                 self.map_has_enemies = True
                 self.scene.add_sprite(LAYER_NAME_ENEMIES, enemy)
         except:
+            # If error occurs tilemap does not have enemy layer
+            # and control variable is updated to reflect this.
             self.map_has_enemies = False
             
 
         # Add inanimate objects
         # Try to add in end portal/s
+        # Same logic with the try-except here as before,
+        # except that because this layer does not need to be updated
+        # later it does not need a control variable, so if it doesn't
+        # exist in a level it can just ignored.
         try:
             goal_layer = self.tile_map.object_lists[LAYER_NAME_GOAL]
             for goal_object in goal_layer:
@@ -1470,6 +1666,9 @@ class GameView(arcade.View):
                     * 
                     (self.tile_map.tile_height * TILE_SCALING)
                 )
+
+                # Setup the destination level and position from the
+                # custom properties.
                 warp = goal_object.properties["warp"]
                 dest = [
                     goal_object.properties["dest_x"], 
@@ -1483,6 +1682,7 @@ class GameView(arcade.View):
                 
         
         # Try to add in energy orbs
+        # Once again same logic with the try-except.
         try:
             orbs_layer = self.tile_map.object_lists[LAYER_NAME_ORBS]
             for orb_object in orbs_layer:
@@ -1502,6 +1702,8 @@ class GameView(arcade.View):
                     * (self.tile_map.tile_height * TILE_SCALING)
                     -TILE_SCALING
                 )
+                # Setup the type of the orb object from the custom
+                # properties.
                 orb.type = orb_object.properties["type"]
                 self.map_has_orbs = True
                 self.scene.add_sprite(LAYER_NAME_ORBS, orb)
@@ -1509,6 +1711,8 @@ class GameView(arcade.View):
             self.map_has_orbs = False
 
         # Try to add in collectibles which include quests and secrets
+        # Try-except system works the same, though collectibles don't
+        # need to be updated later so no control variable is needed.
         try:
             collectible_layer = self.tile_map.object_lists[
                 LAYER_NAME_COLLECTIBLES
@@ -1519,6 +1723,9 @@ class GameView(arcade.View):
                     collectible_object.shape[Y_POS]
                 )
                 collectible_type = collectible_object.properties["type"]
+
+                # Load in the various collectible sprites based on the
+                # custom "type" property.
                 if collectible_type == "Apple":
                     collectible = Apple()
                 if collectible_type == "Card":
@@ -1527,12 +1734,16 @@ class GameView(arcade.View):
                     collectible = Document()
                 if collectible_type == "Key":
                     collectible = Key()
+                    # Set the id (the door matching the key) to the
+                    # custom property "unlocks".
                     collectible.id = collectible_object.properties["unlocks"]
                 if collectible_type == "Helmet":
                     collectible = Helmet()
                 if collectible_type == "Rainbow Rock":
                     collectible = RainbowRock()
                 if collectible_type == "Secret":
+                    # Load in the secret collectibles, differentiated
+                    # based on the custom property "name".
                     collectible_name = collectible_object.properties["name"]
                     if collectible_name == "Statuette":
                         collectible = Statuette()
@@ -1547,6 +1758,8 @@ class GameView(arcade.View):
                         collectible = Totem()
                         collectible.name = collectible_name
                 collectible.type = collectible_type
+
+                # Place the collectible at the center of the tile.
                 collectible.center_x = math.floor(
                     (cartesian[X_POS]+HALF_BLOCK) 
                     * 
@@ -1564,12 +1777,15 @@ class GameView(arcade.View):
             pass
         
         # Try to add in the guiding text in the air
+        # Try except works the same as before.
         try:
             self.text_layer = self.tile_map.object_lists[LAYER_NAME_TEXT]
         except:
             pass
 
-        # Add all warp doors into the a list of door information
+        # Add all warp doors positions into the a dictionary of door 
+        # information, with the order of the doors added as the key.
+        # "key_req" checks if the door needs a key to use.
         door_layer = self.tile_map.object_lists[LAYER_NAME_WARP_DOORS]
         count = NOTHING
         for door in door_layer:
@@ -1591,6 +1807,10 @@ class GameView(arcade.View):
             count += UNIT_INCREMENT
 
         # Try to add in locked doors
+        # Locked doors are barriers in the same level requiring a key.
+        # The try-except still works the same as before,
+        # preventing errors where there are no locked door layers in
+        # the tilemap.
         try:
             locked_door_layer = self.tile_map.object_lists[
                 LAYER_NAME_LOCKED_DOORS
@@ -1612,6 +1832,7 @@ class GameView(arcade.View):
                     (cartesian[Y_POS]+HALF_BLOCK) 
                     * self.tile_map.tile_height * TILE_SCALING
                 )
+                # Matching IDs with the key that unlocks the door.
                 locked_door.id = locked_door_object.properties["id"]
                 self.map_has_locked_doors = True
                 self.scene.add_sprite(LAYER_NAME_LOCKED_DOORS, locked_door)
@@ -1621,6 +1842,10 @@ class GameView(arcade.View):
         # Setup GUI Layers
 
         # Setup energy bar
+        # This is an image in the top right of the screen,
+        # which changes depending on the amount of energy possessed.
+        # The default quantity is 0, so the default texture is also
+        # 0.png.
         self.gui_scene.add_sprite(
             LAYER_NAME_ENERGY,
             arcade.Sprite(
@@ -1634,6 +1859,8 @@ class GameView(arcade.View):
             )
 
         # Setup health bar
+        # This works the same as the energy bar, except the default is
+        # 3 rather than 0.
         self.gui_scene.add_sprite(
             LAYER_NAME_HEALTH,
             arcade.Sprite(
@@ -1675,12 +1902,18 @@ class GameView(arcade.View):
         # Activate game camera
         self.camera.use()
         
-        
-        # Draw the scene
+        # Draw the scene 
+        # (the pixelated property makes the lines sharper).
         self.scene.draw(pixelated=True)
 
-        # Actually draw the floating text
-        
+        # Actually draw the floating text from the layer.
+        # If the text colour property is 1 make the text white,
+        # otherwise if it is 0 make it black. This is done to increase
+        # contrast and thus readability against the background.
+        # The try-except works similarly to before where if the layer
+        # exists then there are no issues and the code runs normally.
+        # If the layer doesn't exist then there will be errors and thus
+        # this block of code can be ignored.
         try:
             for text in self.text_layer:
                 cartesian = self.tile_map.get_cartesian(
@@ -1703,6 +1936,12 @@ class GameView(arcade.View):
             pass
 
         # Start quest dialogue
+        # If there is an available quest that the player is in,
+        # draw the starting dialogue on top of the quest villager.
+        # To increase readability also draw a matching white rectangle
+        # behind the black text.
+        # This will be drawn as long as the timer for that specific
+        # quest dialogue is above 0.
         if self.in_quest:
             try:
                 if self.latest_quest["dialogue_time"] > NOTHING:
@@ -1726,10 +1965,15 @@ class GameView(arcade.View):
                         anchor_x="center",
                         anchor_y="center",
                     )
-            except KeyError:
+            except:
+                # If there's no available quest at the moment
+                # just ignore this block.
                 pass
         
         # If quest not complete then draw this
+        # The rectangle and text works the same as before.
+        # This is also drawn above the villager that the user
+        # is interacting with.
         if self.not_complete_time > NOTHING:
             arcade.draw_rectangle_filled(
                 self.check_quest["villager_pos"][X_POS],
@@ -1753,6 +1997,11 @@ class GameView(arcade.View):
             )
 
         # If quest complete draw this
+        # The logic here is that self.finished_quest is a temporary
+        # store of the latest finished quest. During the period where
+        # the latest finished quest still exists, draw the quest
+        # complete dialogue on top of the villager being interacted with.
+        # Rectangle and text still work the same.
         if self.finished_quest != None:
             if self.finished_quest["dialogue_time"] > NOTHING:
                 arcade.draw_rectangle_filled(
@@ -1776,7 +2025,7 @@ class GameView(arcade.View):
                     anchor_y="center",
                 )
 
-        # If key missing draw this
+        # If key missing draw this text above the player sprite.
         if self.missing_key_text > NOTHING:
             arcade.draw_rectangle_filled(
                 self.player_sprite.center_x,
@@ -1799,7 +2048,7 @@ class GameView(arcade.View):
                 anchor_y="center"
             )
 
-        # If secret found then draw this
+        # If secret found then draw this above the player sprite.
         if self.secret_found_text > NOTHING:
             arcade.draw_rectangle_filled(
                 self.player_sprite.center_x,
@@ -1827,10 +2076,13 @@ class GameView(arcade.View):
 
         # Draw GUI content
 
-        # Display current energy
+        # Display current energy and health
         self.gui_scene.draw(pixelated=True)
 
         # If interact is possible then draw this text
+        # This text is drawn in the bottom right of the screen.
+        # The colour is white against a black rectangle to
+        # increase readability.
         if self.can_interact:
             arcade.draw_rectangle_filled(
                 SCREEN_WIDTH*INTERACT_TEXT_POS,
@@ -1849,7 +2101,12 @@ class GameView(arcade.View):
                 anchor_y="center"
             )
         
-        # If in quest then draw the current quest progress
+        # If in quest then draw the current quest progress.
+        # The current quests are taken from the current quest
+        # dictionary and are drawn stacked on top of each other.
+        # Once a quest is completed it disappears from the current
+        # quest list so there are no gaps in the quest progress list
+        # under the energy bar.
         if self.in_quest:
             count = FIRST_VALUE
             for id, info in self.quests.items():
@@ -1880,12 +2137,19 @@ class GameView(arcade.View):
         Called when we change a key up/down or we move on/off a ladder.
         """
         # Process up/down
+        # There are different actions for different player shapes.
+        # For the blaze shape, the down button accelerates the player
+        # downwards, while the up button accelerates the player up.
+        # It has no jumping mechanic, while the human and dog shapes
+        # do.
         if self.up_pressed and not self.down_pressed:
             if self.physics_engine.is_on_ladder():
                 self.player_sprite.change_y = PLAYER_WALK_SPEED
             elif self.shape == PLAYER_SHAPE_BLAZE:
                 self.fly_speed += (self.thrust - GRAVITY)*self.delta_time
             else:
+                # If the player is a certain distance above the ground
+                # it can jump again.
                 if (
                     self.physics_engine.can_jump(y_distance=GROUND_DISTANCE)
                     and not self.jump_needs_reset
@@ -1901,7 +2165,8 @@ class GameView(arcade.View):
                     *self.delta_time
                     )
 
-        # Process up/down when on a ladder and no movement
+        # Process up/down when on a ladder. If both keys pressed
+        # at the same time there is no movement.
         if self.physics_engine.is_on_ladder():
             if not self.up_pressed and not self.down_pressed:
                 self.player_sprite.change_y = STATIONARY
@@ -1909,6 +2174,9 @@ class GameView(arcade.View):
                 self.player_sprite.change_y = STATIONARY
 
         # Process left/right
+        # Walking left and right when the left and right keys
+        # are pressed.
+        # If both keys pressed at the same time player does not move.
         if self.right_pressed and not self.left_pressed:
             self.player_sprite.change_x = PLAYER_WALK_SPEED
         elif self.left_pressed and not self.right_pressed:
