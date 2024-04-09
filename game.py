@@ -1411,7 +1411,7 @@ class GameView(arcade.View):
         }
 
         self.inventory_other = {
-            "002": {"name": "Knife", "type": "Weapon", "number": 1},
+            "002": {"name": "Knife", "type": "Weapon", "number": 0},
             "003": {"name": "Church Key", "type": "Key", "number": 0},
             "100": {"name": "Cave Key", "type": "Key", "number": 0},
             "200": {"name": "God Key", "type": "Key", "number": 0}
@@ -2172,7 +2172,7 @@ class GameView(arcade.View):
                 anchor_x = "center",
                 anchor_y="center"
             )
-            
+
         # Activate the GUI camera to draw GUI elements
         self.gui_camera.use()
 
