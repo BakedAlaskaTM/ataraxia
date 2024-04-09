@@ -4,7 +4,7 @@
 # in the scene, and all code relating to it can be ignored.
 
 # Import all modules/libraries required to run the code.
-import arcade, os, math
+import arcade, os, math, sys
 
 # Defining constants
 # This specifies the absolute path to the game folder on the user's
@@ -20,8 +20,8 @@ MAIN_PATH = os.path.dirname(os.path.abspath(__file__))
 # or half of a full length.
 # INTERACT_TEXT_POS refers to the percentage along the screen the
 # "Can interact" text should be placed. 
-SCREEN_WIDTH = 1280
-SCREEN_HEIGHT = 720
+SCREEN_WIDTH = 1920
+SCREEN_HEIGHT = 1080
 SCREEN_TITLE = "Ataraxia"
 HALF_BLOCK = 0.5
 ONE_BLOCK = 1
@@ -71,6 +71,7 @@ QUEST_COMPLETE_RECT_WIDTH = 280
 QUEST_INCOMPLETE_RECT_WIDTH = 380
 KEY_MISSING_RECT_WIDTH = 125
 SECRET_FOUND_RECT_WIDTH = 125
+NEW_SPAWNPOINT_RECT_WIDTH = 200
 INTERACT_RECT_WIDTH = 200
 INTERACT_Y_OFFSET = 50
 QUEST_RECT_WIDTH = 250
@@ -258,6 +259,7 @@ QUEST_INCOMPLETE_TIME = 2
 QUEST_COMPLETE_TIME = 2
 MISSING_KEY_TIME = 2
 SECRET_FOUND_TIME = 2
+NEW_SPAWNPOINT_TIME = 2
 
 # Sensing constants
 # These constants are the maximum distance at which interactions can
@@ -1211,24 +1213,75 @@ class MainMenu(arcade.View):
 
     def on_show_view(self):
         """Called when showing this view."""
-        arcade.set_background_color(MENU_BACKGROUND)
+        self.clear()
+        background = arcade.load_texture(
+            f"{MAIN_PATH}/assets/Screens/Start/Start.PNG"
+            )
+        arcade.draw_lrwh_rectangle_textured(
+            ORIGIN[X_POS],
+            ORIGIN[Y_POS],
+            SCREEN_WIDTH,
+            SCREEN_HEIGHT,
+            background
+        )
 
     def on_draw(self):
-        """Display the menu"""
+        """
+        Draws the view every frame.
+        """
+        background = arcade.load_texture(
+            f"{MAIN_PATH}/assets/Screens/Start/Start.PNG"
+            )
+        arcade.draw_lrwh_rectangle_textured(
+            ORIGIN[X_POS],
+            ORIGIN[Y_POS],
+            SCREEN_WIDTH,
+            SCREEN_HEIGHT,
+            background
+        )
+
+    def on_mouse_press(self, _x, _y, _button, _modifiers):
+        """Use a mouse press to advance to the instructions view."""
+        instruction_view = Instructions()
+        self.window.show_view(instruction_view)
+
+# Instructions Screen
+class Instructions(arcade.View):
+    """
+    The instructions screen displayed after the menu screen.
+    """
+    def on_show_view(self):
+        """Called when showing this view."""
+        background = arcade.load_texture(
+            f"{MAIN_PATH}/assets/Screens/Start/Instructions.PNG"
+        )
+        arcade.draw_lrwh_rectangle_textured(
+            ORIGIN[X_POS],
+            ORIGIN[Y_POS],
+            SCREEN_WIDTH,
+            SCREEN_HEIGHT,
+            background
+        )
+    
+    def on_draw(self):
+        """Draws the scene every frame."""
         self.clear()
-        arcade.draw_text(
-            "Click to start game",
-            SCREEN_WIDTH / 2,
-            SCREEN_HEIGHT / 2,
-            BLACK,
-            font_size = 30,
-            anchor_x = "center",
+        background = arcade.load_texture(
+            f"{MAIN_PATH}/assets/Screens/Start/Instructions.PNG"
+            )
+        arcade.draw_lrwh_rectangle_textured(
+            ORIGIN[X_POS],
+            ORIGIN[Y_POS],
+            SCREEN_WIDTH,
+            SCREEN_HEIGHT,
+            background
         )
 
     def on_mouse_press(self, _x, _y, _button, _modifiers):
         """Use a mouse press to advance to the actual game view."""
         game_view = GameView()
         self.window.show_view(game_view)
+
 
 # End Screen
 class EndScreen(arcade.View):
@@ -1244,8 +1297,7 @@ class EndScreen(arcade.View):
         secrets the player managed to find.
         """
         super().__init__()
-        self.background = arcade.load_texture()
-
+        
         # Using by checking which secrets are present in the found list
         # a unique string of numbers can be created for each
         # combination of secrets. This is subsequently the file name
@@ -1268,24 +1320,35 @@ class EndScreen(arcade.View):
             self.secrets_to_display += "1"
         else:
             self.secrets_to_display += "0"
-
+        self.background = arcade.load_texture(
+            f"{MAIN_PATH}/assets/Screens/End/{self.secrets_to_display}.PNG"
+            )
+    
     def on_show_view(self):
         """Called when showing this view."""
+        self.clear()
         arcade.draw_lrwh_rectangle_textured(
-            0,
-            0,
+            ORIGIN[X_POS],
+            ORIGIN[Y_POS],
             SCREEN_WIDTH,
             SCREEN_HEIGHT,
             self.background
         )
+
+    def on_draw(self):
+        """Called when showing this view."""
+        self.clear()
         arcade.draw_lrwh_rectangle_textured(
-            0,
-            0,
+            ORIGIN[X_POS],
+            ORIGIN[Y_POS],
             SCREEN_WIDTH,
-            0.5*SCREEN_HEIGHT,
-            f"{self.secrets_to_display}.png"
+            SCREEN_HEIGHT,
+            self.background
         )
 
+    def on_mouse_press(self, _x, _y, _button, _modifiers):
+        sys.exit()
+    
 
 # Actual Game
 class GameView(arcade.View):
@@ -1389,6 +1452,7 @@ class GameView(arcade.View):
         self.available_layers = []
         self.missing_key_text = NOTHING
         self.secret_found_text = NOTHING
+        self.new_spawnpoint_text = NOTHING
 
         # Sound effects and audio
         self.bg_music = arcade.load_sound(
@@ -1470,7 +1534,7 @@ class GameView(arcade.View):
                 "use_spatial_hash": True,
             },
             LAYER_NAME_LADDERS: {
-                "use_spatial_hash": True,
+                "use_spatial_hash": False,
             },
             LAYER_NAME_MOVING_PLATFORMS: {
                 "use_spatial_hash": False,
@@ -1667,7 +1731,7 @@ class GameView(arcade.View):
                     self.tile_map.tile_width
                 )
                 goal.center_y = math.floor(
-                    cartesian[Y_POS]+HALF_BLOCK 
+                    (cartesian[Y_POS]+HALF_BLOCK)
                     * 
                     (self.tile_map.tile_height * TILE_SCALING)
                 )
@@ -2076,6 +2140,27 @@ class GameView(arcade.View):
                 anchor_y="center"
             )
 
+        if self.new_spawnpoint_text > NOTHING:
+            arcade.draw_rectangle_filled(
+                self.player_sprite.center_x,
+                (self.player_sprite.center_y
+                 +(ONE_BLOCK+HALF_BLOCK)
+                 *TILE_SCALING*self.tile_map.tile_height),
+                NEW_SPAWNPOINT_RECT_WIDTH,
+                RECT_HEIGHT,
+                WHITE,
+            )
+            arcade.draw_text(
+                "New Spawnpoint Set",
+                self.player_sprite.center_x,
+                (self.player_sprite.center_y
+                 +(ONE_BLOCK+HALF_BLOCK)
+                 *TILE_SCALING*self.tile_map.tile_height),
+                BLACK,
+                DIALOGUE_FONT,
+                anchor_x = "center",
+                anchor_y="center"
+            )
         # Activate the GUI camera to draw GUI elements
         self.gui_camera.use()
 
@@ -2846,6 +2931,7 @@ class GameView(arcade.View):
                         self.scene[LAYER_NAME_STATUES].remove(collision)
                         self.prev_spawnpoint = collision
                         self.energy = MAX_ENERGY
+                        self.new_spawnpoint_text = NEW_SPAWNPOINT_TIME
                 self.interact = False
         except:
             pass
@@ -3178,7 +3264,8 @@ class GameView(arcade.View):
         else:
             self.in_quest = False
 
-        # Reducing all of the timer variables
+        # Reducing all of the timer variables by the framerate time
+        # until they reach 0.
         if self.cooldown > NOTHING:
             self.cooldown -= delta_time
         else:
@@ -3203,6 +3290,11 @@ class GameView(arcade.View):
         else:
             self.secret_found_text = NOTHING
 
+        if self.new_spawnpoint_text > NOTHING:
+            self.new_spawnpoint_text -= delta_time
+        else:
+            self.new_spawnpoint_text = NOTHING
+        
         # If these variables exist, i.e. after a quest has been started,
         # Run the timer code
         # Otherwise, just ignore it
@@ -3240,8 +3332,9 @@ class GameView(arcade.View):
                 # If the destination level is 4 end the game and show
                 # the end screen.
                 if collision.warp == "4":
-                    end_view = EndScreen()
+                    end_view = EndScreen(self.secrets_found)
                     self.window.show_view(end_view)
+                    return
                 else:
                     # Otherwise teleport the player to the next level
                     # and run the setup, placing the player at the

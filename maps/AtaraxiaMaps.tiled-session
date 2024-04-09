@@ -3,7 +3,7 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "0.tmx",
+    "activeFile": "3.3.tmx",
     "expandedProjectPaths": [
         "."
     ],
@@ -11,44 +11,45 @@
     "fileStates": {
         "0.tmx": {
             "expandedObjectLayers": [
+                12,
                 11,
-                10,
-                12
+                10
             ],
             "scale": 1,
             "selectedLayer": 7,
             "viewCenter": {
-                "x": 712.5,
-                "y": 140.5
+                "x": 504,
+                "y": 78
             }
         },
         "1.1.tmx": {
             "expandedObjectLayers": [
                 19,
                 21,
-                5,
+                17,
                 6,
                 10,
-                14,
-                17
+                5,
+                14
             ],
-            "scale": 1,
-            "selectedLayer": 13,
+            "scale": 4,
+            "selectedLayer": 7,
             "viewCenter": {
-                "x": 2538,
-                "y": 1408
+                "x": 5577,
+                "y": 1462.25
             }
         },
         "1.2.tmx": {
             "expandedObjectLayers": [
-                5,
-                13
+                13,
+                6,
+                5
             ],
             "scale": 3.7406249999999996,
-            "selectedLayer": 13,
+            "selectedLayer": 6,
             "viewCenter": {
                 "x": 160.1336675020886,
-                "y": 160.13366750208857
+                "y": 159.8663324979115
             }
         },
         "1.3.tmx": {
@@ -60,46 +61,93 @@
             "scale": 5.5,
             "selectedLayer": 11,
             "viewCenter": {
-                "x": 193.09090909090912,
-                "y": 220.1818181818182
+                "x": 160,
+                "y": 159.9090909090909
             }
         },
         "1.4.tmx": {
             "expandedObjectLayers": [
                 5,
-                6,
-                13
+                13,
+                6
             ],
             "scale": 4,
-            "selectedLayer": 13,
+            "selectedLayer": 6,
             "viewCenter": {
-                "x": 192.25,
-                "y": 223.75
+                "x": 191.75,
+                "y": 223.25
             }
         },
         "1.tmx": {
             "scale": 0.4769,
             "selectedLayer": 8,
             "viewCenter": {
-                "x": 894.3174669742084,
-                "y": 384.7766827427134
+                "x": 891.1721534912979,
+                "y": 381.631369259803
             }
         },
         "2.1.tmx": {
             "expandedObjectLayers": [
-                17,
-                12,
-                15,
                 13,
-                14,
                 9,
-                21
+                15,
+                14
+            ],
+            "scale": 0.75,
+            "selectedLayer": 5,
+            "viewCenter": {
+                "x": 1113.3333333333335,
+                "y": 385.33333333333326
+            }
+        },
+        "2.2.tmx": {
+            "expandedObjectLayers": [
+                6,
+                10
             ],
             "scale": 3,
-            "selectedLayer": 4,
+            "selectedLayer": 11,
             "viewCenter": {
-                "x": 1131.8333333333333,
-                "y": 600.5
+                "x": 183.33333333333337,
+                "y": 178.66666666666669
+            }
+        },
+        "3.1.tmx": {
+            "expandedObjectLayers": [
+                13,
+                10,
+                20,
+                12,
+                15
+            ],
+            "scale": 2,
+            "selectedLayer": 17,
+            "viewCenter": {
+                "x": 2085,
+                "y": 174.5
+            }
+        },
+        "3.2.tmx": {
+            "expandedObjectLayers": [
+                10
+            ],
+            "scale": 8,
+            "selectedLayer": 11,
+            "viewCenter": {
+                "x": 95.625,
+                "y": 51.5
+            }
+        },
+        "3.3.tmx": {
+            "expandedObjectLayers": [
+                6,
+                10
+            ],
+            "scale": 5.5,
+            "selectedLayer": 11,
+            "viewCenter": {
+                "x": 105.27272727272728,
+                "y": 64.18181818181819
             }
         },
         "Backdrops.tsx": {
@@ -116,12 +164,16 @@
                 "y": 1088.908939014202
             }
         },
+        "Interior.tsx": {
+            "scaleInDock": 0.75,
+            "scaleInEditor": 0.75
+        },
         "NPCs.tsx": {
             "scaleInDock": 1
         },
         "Testing Tiles.tsx": {
             "dynamicWrapping": true,
-            "scaleInDock": 0.03125,
+            "scaleInDock": 0.25,
             "scaleInEditor": 0.75
         },
         "testmap.tmj": {
@@ -146,20 +198,32 @@
     "map.tileWidth": 16,
     "map.width": 200,
     "openFiles": [
-        "0.tmx",
         "Testing Tiles.tsx",
-        "1.tmx"
+        "Interior.tsx",
+        "1.2.tmx",
+        "1.3.tmx",
+        "1.1.tmx",
+        "3.1.tmx",
+        "2.2.tmx",
+        "2.1.tmx",
+        "3.2.tmx",
+        "3.3.tmx"
     ],
     "project": "AtaraxiaMaps.tiled-project",
-    "property.type": "int",
+    "property.type": "string",
     "recentFiles": [
-        "2.1.tmx",
-        "1.tmx",
-        "1.4.tmx",
-        "1.1.tmx",
-        "0.tmx",
         "Testing Tiles.tsx",
-        "testmap.tmj"
+        "Interior.tsx",
+        "1.2.tmx",
+        "1.3.tmx",
+        "1.1.tmx",
+        "3.1.tmx",
+        "2.2.tmx",
+        "2.1.tmx",
+        "3.2.tmx",
+        "3.3.tmx",
+        "0.tmx",
+        "1.tmx"
     ],
     "tileset.lastUsedFormat": "tsx",
     "tileset.type": 1
