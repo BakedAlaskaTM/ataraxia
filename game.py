@@ -1347,6 +1347,10 @@ class EndScreen(arcade.View):
         )
 
     def on_mouse_press(self, _x, _y, _button, _modifiers):
+        """
+        Exit the program and close the window when mouse pressed.
+        """
+        self.window.close()
         sys.exit()
     
 
@@ -1407,7 +1411,7 @@ class GameView(arcade.View):
         }
 
         self.inventory_other = {
-            "002": {"name": "Knife", "type": "Weapon", "number": 0},
+            "002": {"name": "Knife", "type": "Weapon", "number": 1},
             "003": {"name": "Church Key", "type": "Key", "number": 0},
             "100": {"name": "Cave Key", "type": "Key", "number": 0},
             "200": {"name": "God Key", "type": "Key", "number": 0}
@@ -1517,6 +1521,11 @@ class GameView(arcade.View):
         self.map_has_locked_doors = False
         self.available_layers = []
         self.text_layer = None
+
+        # Update quest variables 
+        # (This is done when switching between sublevels)
+        self.check_quest = None
+
 
         # Update sensing variables
         self.interactable_door = None
@@ -2140,6 +2149,8 @@ class GameView(arcade.View):
                 anchor_y="center"
             )
 
+        # If the player interacts with a statue
+        # display the text for 2 seconds above the player.
         if self.new_spawnpoint_text > NOTHING:
             arcade.draw_rectangle_filled(
                 self.player_sprite.center_x,
@@ -2161,6 +2172,7 @@ class GameView(arcade.View):
                 anchor_x = "center",
                 anchor_y="center"
             )
+            
         # Activate the GUI camera to draw GUI elements
         self.gui_camera.use()
 
@@ -2534,7 +2546,7 @@ class GameView(arcade.View):
         }
 
         # Set the latest quest to the new quest.
-        self.latest_quest = self.quests[villager.id]
+        self.latest_quest = self.quests[villager.id].copy()
 
     def check_quest_complete(self, villager):
         """
@@ -3303,7 +3315,10 @@ class GameView(arcade.View):
                 self.latest_quest["dialogue_time"] -= delta_time
             else:
                 self.latest_quest["dialogue_time"] = NOTHING
-            
+        except:
+            pass
+
+        try:
             if self.finished_quest["dialogue_time"] > NOTHING:
                 self.finished_quest["dialogue_time"] -= delta_time
             else:

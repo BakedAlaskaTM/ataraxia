@@ -210,7 +210,7 @@
         "3.3.tmx"
     ],
     "project": "AtaraxiaMaps.tiled-project",
-    "property.type": "string",
+    "property.type": "int",
     "recentFiles": [
         "Testing Tiles.tsx",
         "Interior.tsx",
